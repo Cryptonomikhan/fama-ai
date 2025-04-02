@@ -1,0 +1,105 @@
+---
+description: Apply these rules when creating the project
+globs:
+alwaysApply: true
+---
+## Project Overview
+
+*   **Type:** Financial Modeling Agent
+*   **Description:** A sophisticated financial modeling agent designed to perform deep research, analyze both traditional and non-traditional business opportunities, and generate comprehensive financial models accompanied by interactive, white-label dashboards. The system incorporates multiple specialized agents for market research, financial analysis, and visualization, while seamlessly integrating with external services such as Plaid API for real-time data retrieval.
+*   **Primary Goal:** To create a sophisticated financial modeling agent that can perform in-depth research, reason about business opportunities, and generate high-quality financial models with visually appealing dashboards.
+
+## Project Structure
+
+### Framework-Specific Routing
+
+*   **Directory Rules:**
+
+    *   `AgnoFramework@1.0`: Routes are organized under a dedicated API directory, following modular agent-based architecture for routing and orchestration.
+    *   Example 1: "API Endpoint" → `src/api/main.py` for handling REST API requests.
+    *   Example 2: "Dashboard Route" → `src/views/dashboard/App.jsx` for React-based visualization components.
+
+### Core Directories
+
+*   **Versioned Structure:**
+
+    *   `src/api`: Contains Python backend code developed with Agno Framework conventions for REST API endpoints and agent orchestration.
+    *   `src/views`: Houses React front-end components responsible for building customizable dashboards and visualizations.
+
+### Key Files
+
+*   **Stack-Versioned Patterns:**
+
+    *   `src/api/main.py`: Main API entry point handling incoming REST API calls and delegating tasks to specialized agents.
+    *   `src/api/agents/research.py`: Implements the deep research agent, focusing on market research, competition analysis, and KPI identification.
+    *   `src/api/agents/analysis.py`: Contains logic for financial analysis and construction of comprehensive financial models.
+    *   `src/api/agents/visualization.py`: Responsible for transforming analytical outcomes into interactive dashboards and detailed visualization reports.
+
+## Tech Stack Rules
+
+*   **Version Enforcement:**
+
+    *   `AgnoFramework@1.0`: Enforce a modular, agent-based architecture with clear routing conventions.
+    *   `Python@3.x`: Use Python 3 with asynchronous processing and adherence to best coding practices for backend API development.
+    *   `React@18`: Utilize functional components with hooks for building dynamic and performance-optimized dashboards.
+    *   `REST API`: Design stateless endpoints ensuring each request is processed independently, following modern RESTful principles.
+
+## PRD Compliance
+
+*   **Non-Negotiable:**
+
+    *   "The agent must be stateless and process each request independently without persistent background operations": Enforce a stateless design leveraging serverless architecture to meet PRD specifications.
+
+## App Flow Integration
+
+*   **Stack-Aligned Flow:**
+
+    *   The API endpoint (`src/api/main.py`) receives data context from third party applications.
+    *   The deep research agent (`src/api/agents/research.py`) performs market research and competitive analysis.
+    *   The financial analysis agent (`src/api/agents/analysis.py`) determines the appropriate revenue model and constructs a detailed financial model.
+    *   The visualization agent (`src/api/agents/visualization.py`) converts the financial model into interactive dashboards rendered via React components in `src/views/dashboard/`.
+
+## Best Practices
+
+*   Agno Framework
+    *   Keep modules decoupled and maintain a plugin-friendly architecture to facilitate easy future integrations.
+    *   Leverage built-in abstractions for agent orchestration and clear directory structuring.
+    *   Follow framework conventions strictly to maintain consistency across API endpoints and internal routing.
+
+*   Python
+    *   Use asynchronous programming where possible to optimize response times and scalability.
+    *   Adhere to PEP 8 style guidelines and implement thorough unit tests for critical components.
+    *   Prioritize clear separation between API routing logic and business logic.
+
+*   React
+    *   Utilize functional components and hooks to streamline state management and component lifecycle.
+    *   Maintain a component-based architecture to promote reusability and scalability.
+    *   Optimize performance by lazy-loading heavy or non-critical components.
+
+*   REST API
+    *   Ensure all endpoints are stateless and idempotent to support the one-shot design requirement.
+    *   Secure API routes using HTTPS along with appropriate authentication and data validation mechanisms.
+    *   Implement comprehensive error handling and input sanitization to protect against injection attacks.
+
+*   Serverless Architecture
+    *   Design functions for rapid startup and independent request handling to maximize scalability.
+    *   Optimize resource usage and include monitoring/logging mechanisms for performance analysis.
+    *   Ensure that each function operates independently, in line with stateless design principles.
+
+*   Plaid API
+    *   Abide by Plaid API guidelines, including rate limits and secure data handling practices.
+    *   Use secure tokens and follow best practices to manage financial data responsibly.
+    *   Implement robust error handling and fallback strategies for API rate limit issues or outages.
+
+*   AI Models
+    *   Clearly define roles for each model (e.g., GPT 4o for coding assistance, Claude 3.7 Sonnet for reasoning, Gemini 2.5 Pro for complex problem solving, and Deepseek R1 for deep analysis).
+    *   Validate outputs contextually and incorporate domain-specific testing.
+    *   Employ fallback mechanisms to maintain functionality in case of model unavailability or unexpected outputs.
+
+## Rules
+
+*   Derive folder/file patterns directly from techStackDoc versions where applicable.
+*   If using Agno Framework with modular agent routing, enforce a dedicated `src/api/agents` directory to house all agent implementations.
+*   For REST API development, maintain a strict stateless design, separating API endpoint logic from core business processing.
+*   Enforce a clear separation between the backend (Python API) and the frontend (React Dashboard) directories.
+*   Never mix version patterns (e.g., avoid placing React component files within Python API directories).

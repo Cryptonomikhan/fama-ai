@@ -1,0 +1,33 @@
+# Agno Framework for Agent-Based Applications
+agno>=0.6.0
+
+# API & Web Framework
+fastapi>=0.104.0
+uvicorn>=0.23.2
+python-dotenv>=1.0.0
+
+# HTTP Client & Networking
+httpx>=0.25.0
+aiohttp>=3.8.5
+
+# Data Processing & Modeling
+numpy>=1.24.0
+pandas>=2.0.0
+pydantic>=2.4.0
+
+# Utilities
+python-dateutil>=2.8.2
+pytz>=2023.3
+tqdm>=4.66.1
+
+# Financial Data Integration
+plaid-python>=16.0.0
+
+# Visualization Support
+matplotlib>=3.7.1
+seaborn>=0.12.2
+
+# AI Model Integrations
+openai>=1.12.0  # For OpenAI API
+anthropic>=0.8.1  # For Claude models
+google-generativeai>=0.3.1  # For Gemini models 
