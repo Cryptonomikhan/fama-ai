@@ -1,0 +1,368 @@
+openapi: 3.0.3
+info:
+  title: Fama AI API
+  description: |
+    API for the Fama AI platform, which provides agentic financial modeling for 
+    yield-generating investment vehicles.
+    
+    The API enables users to submit natural language descriptions of investment 
+    vehicles and receive comprehensive financial analyses including research, 
+    assumptions, financial models, scenarios, and validation.
+  version: 1.0.0
+  contact:
+    name: Fama AI Support
+    email: support@famaai.com
+    url: https://famaai.com
+  license:
+    name: Proprietary
+    url: https://famaai.com/license
+
+servers:
+  - url: https://api.famaai.com
+    description: Production server
+  - url: http://localhost:8000
+    description: Local development server
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Invalid input parameters
+        details:
+          type: object
+          description: Additional error details
+
+    SubmitRequest:
+      type: object
+      required:
+        - description
+      properties:
+        description:
+          type: string
+          description: Natural language description of the investment vehicle
+          example: "A real estate fund that focuses on multifamily properties in growing metropolitan areas"
+        time_horizon:
+          type: integer
+          description: Time horizon for the investment in years
+          default: 5
+          minimum: 1
+          maximum: 30
+          example: 5
+        risk_factors:
+          type: string
+          description: Risk factors to consider
+          enum: [conservative, moderate, aggressive]
+          default: moderate
+          example: moderate
+        output_format:
+          type: string
+          description: Format for the output
+          enum: [json, csv, pdf]
+          default: json
+          example: json
+        research_context:
+          type: string
+          description: Additional context for the research
+          example: "Focus on demographic trends and rental yield data"
+        use_team_approach:
+          type: boolean
+          description: Whether to use the team-based approach or the step-by-step approach
+          default: false
+          example: false
+        model_provider:
+          type: string
+          description: The model provider to use
+          enum: [formation, openai, anthropic]
+          example: formation
+        model_id:
+          type: string
+          description: The specific model ID to use (optional)
+          example: claude-3-opus-20240229
+
+    SubmitResponse:
+      type: object
+      required:
+        - request_id
+        - status
+        - log_stream_url
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the request
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          type: string
+          description: Status of the request
+          enum: [processing, complete, error]
+          example: processing
+        log_stream_url:
+          type: string
+          description: URL for streaming logs for this request
+          example: "/api/logs/123e4567-e89b-12d3-a456-426614174000"
+        message:
+          type: string
+          description: Additional information about the request
+          example: "Request received and processing started"
+
+    LogsResponse:
+      type: object
+      required:
+        - request_id
+        - status
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the request
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        status:
+          type: string
+          description: Status of the request
+          enum: [processing, complete, error]
+          example: complete
+        logs:
+          type: array
+          description: Log entries for the request
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+                example: "2023-06-15T14:30:00Z"
+              level:
+                type: string
+                enum: [DEBUG, INFO, WARNING, ERROR]
+                example: INFO
+              message:
+                type: string
+                example: "Starting research phase"
+        results:
+          type: object
+          description: Results of the financial modeling process
+          properties:
+            research_results:
+              type: object
+              description: Research findings about the investment vehicle
+            market_conditions:
+              type: object
+              description: Current market conditions relevant to the investment
+            yield_data:
+              type: object
+              description: Yield data for similar investments
+            assumptions:
+              type: object
+              description: Key assumptions used in the financial model
+            assumption_validation:
+              type: object
+              description: Validation of the assumptions
+            financial_model:
+              type: object
+              description: Pro forma financial statements
+            metrics:
+              type: object
+              description: Financial metrics (IRR, NPV, ROI, etc.)
+            scenarios:
+              type: object
+              description: Multiple scenarios (baseline, bull, bear)
+            scenario_impact:
+              type: object
+              description: Impact analysis of different scenarios
+            validation:
+              type: object
+              description: Validation of the financial model and analysis
+        error:
+          type: string
+          description: Error message if status is error
+          example: "Failed to generate financial model due to invalid input parameters"
+
+paths:
+  /api/submit:
+    post:
+      summary: Submit an investment vehicle description for analysis
+      description: |
+        This endpoint accepts a natural language description of an investment 
+        vehicle and various parameters for the analysis. It returns a request ID 
+        that can be used to retrieve the results.
+      operationId: submitInvestmentVehicle
+      tags:
+        - Analysis
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitRequest'
+      responses:
+        '202':
+          description: Request accepted and processing started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubmitResponse'
+        '400':
+          description: Invalid input parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/logs/{request_id}:
+    get:
+      summary: Get logs and results for a specific request
+      description: |
+        This endpoint returns the logs and results for a specific request. If the
+        request is still processing, only logs will be returned. If the request
+        is complete, both logs and results will be returned.
+      operationId: getLogs
+      tags:
+        - Logs
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          description: Unique identifier for the request
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Logs and results retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogsResponse'
+        '401':
+          description: Unauthorized - Invalid or missing API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/health:
+    get:
+      summary: Check API health
+      description: |
+        This endpoint returns the health status of the API, including the
+        availability of required components like language models.
+      operationId: checkHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded]
+                    example: healthy
+                  message:
+                    type: string
+                    example: "All systems operational"
+                  components:
+                    type: object
+                    properties:
+                      api:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum: [healthy, degraded, unavailable]
+                            example: healthy
+                          message:
+                            type: string
+                            example: "API is operational"
+                      models:
+                        type: object
+                        properties:
+                          status:
+                            type: string
+                            enum: [healthy, degraded, unavailable]
+                            example: healthy
+                          message:
+                            type: string
+                            example: "All required models are available"
+                          providers:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                  example: "formation"
+                                status:
+                                  type: string
+                                  enum: [healthy, degraded, unavailable]
+                                  example: healthy
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Analysis
+    description: Endpoints for analyzing investment vehicles
+  - name: Logs
+    description: Endpoints for retrieving logs and results
+  - name: System
+    description: Endpoints for system information and health checks 

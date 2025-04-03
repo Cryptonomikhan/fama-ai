@@ -2,158 +2,162 @@
 
 ## 1. Project Overview
 
-This project is about building an expert financial modeling agent based on the Agno framework. The agent is designed to perform deep research and reasoning about various business opportunities and then deliver a comprehensive financial model. It is built to either work with an existing revenue model provided by the user or to suggest a range of revenue model options such as subscription, pay-as-you-go, pay once use forever, and more. The agent is tailored to understand non-traditional investment opportunities, including yield generating investments like REITs, MLPs, tokenized real world assets, cryptocurrencies, and specialized financial products, all while producing intuitive dashboards and visualizations.
+This project is about building an AI-powered, serverless, and stateless agent system that can analyze and generate financial models for investment vehicles. This system is not a traditional application but a group of specialized agents working together via APIs. The focus is to create an automated framework that translates natural language descriptions of complex investment opportunities—like tokenized GPU assets—into comprehensive financial models, much like a seasoned financial analyst would do.
 
-The agent is being built because companies—from startups to established enterprises—and financial professionals need rapid, reliable, and top-tier financial analyses driven by intelligent research and real-time data integration. Its key objectives are to seamlessly integrate with third-party financial systems, perform deep market and business analysis, and deliver visually engaging and highly accurate financial models that mimic the quality expected from elite institutions. Success will be measured by the agent’s accuracy, flexibility in handling various revenue models, and its ability to support dynamic integration of diverse financial inputs.
+The system is being built to democratize financial expertise by allowing investors, issuers, and financial advisors to access robust financial analysis with minimal human input. Key objectives include accurate financial modeling, in-depth market research, and clear presentation of investment scenarios (baseline, bull, and bear cases). Success criteria are measured by the system’s ability to interpret natural language inputs correctly, generate sophisticated financial outputs, and maintain high quality even as it scales to include other asset types in the future.
 
 ## 2. In-Scope vs. Out-of-Scope
 
 **In-Scope:**
 
-*   Development of a multi-agent system that includes:
-
-    *   A main agent that accepts API requests and manages context from the calling application.
-    *   A deep research sub-agent that performs background analysis on the business, competition, and market dynamics.
-    *   A reporting/visualization sub-agent that builds detailed financial models, dashboards, and visual reports.
-
-*   Integration with third-party financial systems such as banking APIs (e.g., Plaid) and popular bookkeeping software.
-
-*   Support for both pre-provided revenue models and dynamic revenue model suggestions based on market research.
-
-*   White label dashboard customization allowing users to integrate their own branding assets.
-
-*   A one-shot API service design where each call is self-contained and stateless.
-
-*   Modular architecture to allow the easy addition of new functionalities or tools via the Agno framework.
+*   Building a stateless, serverless AI agent framework accessible via API.
+*   Developing a multi-agent system (Research Agent, Modeling Agent, Scenario Planner Agent, Assumption Generator Agent, Validator/Reviewer Agent).
+*   Enabling natural language processing to interpret investment vehicle descriptions.
+*   Implementing financial model generation (income statements, cash flow projections, IRR/NPV analyses).
+*   Providing customizable parameters such as time horizons and risk factors (initially supporting only US dollars).
+*   Integrating a streaming log API for real-time logging and debugging.
+*   Supporting multiple output formats: JSON, CSV, PDF, and options for interactive dashboards with charts and visualizations.
+*   API key-based authentication with billing and credit management.
 
 **Out-of-Scope:**
 
-*   Persistent data storage or long-term memory; the system is stateless.
-*   Real-time background processing or continuous running of the agent after completing a job.
-*   Pre-built integrations for every possible financial data source; only the most commonly used ones will be prioritized.
-*   User role management or permission hierarchies, as the system assumes that the calling application has already handled user authentication and permissions.
-*   Future extensions such as a dedicated Chief Revenue Officer agent.
+*   Direct integration with live, real-time financial data sources or third-party financial APIs (for now).
+*   Multi-currency support (future enhancement beyond US dollars).
+*   Deep customization of the UI, as this is an API-only system.
+*   Extensive integration with other external financial tools beyond the basic data input option.
+*   Advanced fallback mechanisms beyond immediate user notification and simple retry options.
 
 ## 3. User Flow
 
-When a user initiates a request via the API, the process begins with the system receiving all necessary context about the business opportunity. This includes information on revenue models, financial metrics, and pointers to external data sources like bank accounts and bookkeeping software. The agent authenticates the incoming data and simultaneously configures any needed third-party integrations (e.g., banking via Plaid) to gather real-time financial data such as expenses, revenues, profits, and balance sheet details.
+A typical user starts by authenticating with their unique API key. Once authenticated, the user sends a natural language description of the investment vehicle via an API call, optionally including parameters like the time horizon and risk factors. After receiving the description, the system dispatches a series of specialized agents to process the input data, perform in-depth domain research, generate financial models, and validate the results against trusted market trends and historical data.
 
-After data aggregation, the system activates a deep research sub-agent that conducts a thorough analysis of the business, its competition, and specific market conditions. Depending on the available input, the research component either confirms an existing revenue model or presents multiple revenue model options for the user to select. Once the analysis is complete, a financial model is constructed and beautifully visualized in customized, white label dashboards. Eventually, the summarized report—containing all insights, projections, and interactive visuals—is returned to the user via the API in a one-shot, stateless process.
+After the agents complete their analysis, the system compiles the financial model and analysis output into the user’s chosen format—be it JSON, CSV, a detailed PDF report, or through interactive web dashboards. In parallel, the system streams log data to the designated endpoint for monitoring and debugging purposes. If any agent fails or produces unexpected results, the system alerts the user with an error message and options to either retry the process or manually intervene.
 
 ## 4. Core Features
 
-*   **Deep Research and Analysis:**
+*   **Agentic Architecture:**
 
-    *   Activates a sub-agent to conduct market research.
-    *   Gathers business context, competition analysis, and industry data.
-    *   Identifies key KPIs and financial metrics dynamically.
+    *   Fully agentic, serverless, and stateless design.
+    *   Multi-agent system with specialized agents: Research, Modeling, Scenario Planner, Assumption Generator, and Validator/Reviewer.
 
-*   **Financial Model Construction:**
+*   **Natural Language Processing:**
 
-    *   Builds comprehensive financial models based on provided or suggested revenue models.
-    *   Supports both traditional revenue streams and non-traditional investments (e.g., tokenized assets, REITs).
+    *   Interprets natural language descriptions of investment vehicles.
+    *   Deduce structure, revenue model, underlying assets, operational focus, and market conditions.
 
-*   **Dynamic Revenue Model Options:**
+*   **Financial Model Generation:**
 
-    *   Uses context to either honor an existing revenue model or propose options such as subscription, pay-as-you-go, etc.
-    *   Leverages market data and competitor analysis to offer informed suggestions.
+    *   Construct comprehensive financial models including income statements, cash flow projections, and calculations for IRR and NPV.
+    *   Generate multiple scenarios (baseline, bull, bear cases) based on macroeconomic and microeconomic inputs.
 
-*   **Third-Party Integration:**
+*   **Domain-Specific Research:**
 
-    *   Integrates with banking APIs (e.g., Plaid) and common bookkeeping software.
-    *   Retrieves real-time data like expenses, revenues, and balance sheets for accurate modeling.
+    *   Agents perform in-depth research by leveraging custom Python functions, data scraping tools, and financial libraries.
+    *   Synthesize data from historical trends and general market research.
 
-*   **Custom Dashboards and Visualizations:**
+*   **API-Driven Interactions & Customization:**
 
-    *   Generates interactive and white label customizable dashboards.
-    *   Presents detailed reports and graphics that highlight financial models and KPIs.
+    *   API key authentication and credit-based inference requests.
+    *   Options for user-supplied parameters like time horizon and risk factors.
+    *   Streaming log API for real-time logging, debugging, and performance monitoring.
 
-*   **Multi-Agent Architecture:**
+*   **Flexible Output Formats:**
 
-    *   Incorporates separate agents for deep research, financial analysis, and visualization.
-    *   Enables collaborative processing to ensure high quality and robust outputs in a one-shot execution.
+    *   Available outputs include JSON, CSV, PDF reports, and interactive dashboards with charts and visualizations.
+
+*   **Error Handling & Retry Logic:**
+
+    *   Immediate feedback to users on any agent failure.
+    *   Options to retry processes manually or through automated retries within defined limits.
 
 ## 5. Tech Stack & Tools
 
-*   **Frontend & Visualization:**
+*   **Frontend / API Integration:**
 
-    *   Use React for building any interactive dashboard components.
-    *   Use libraries like D3.js or Chart.js for data visualizations and custom graphic generation.
+    *   The project is API-first; thus, no traditional frontend framework is needed. Integration can be achieved using REST or GraphQL APIs.
 
-*   **Backend & API Service:**
+*   **Backend Frameworks & Languages:**
 
-    *   Python as the primary backend language.
-    *   Serverless architecture to support a one-shot, stateless API service.
-    *   REST API standards for communication between the user’s front end and the backend service.
+    *   Python as the primary programming language.
+    *   Use of the Agno Agent Framework for building the multi-agent system.
+    *   Serverless architecture which may be deployed on platforms such as AWS Lambda or similar.
 
-*   **Framework & Integrations:**
+*   **Authentication & Logging:**
 
-    *   Agno Framework as the core of the financial modeling agent.
-    *   Use Plaid API for banking integration and other popular bookkeeping APIs.
-    *   Modular integration capabilities allow for adding additional tools as functions or classes via the Agno framework.
+    *   API key-based authentication.
+    *   Implementation of a streaming log API for real-time log delivery to the host or designated endpoints.
 
-*   **AI Models & Reasoning Tools:**
+*   **Financial Modeling & Data Tools:**
 
-    *   GPT 4o for coding and technical assistance.
-    *   Claude 3.7 Sonnet as a hybrid reasoning model.
-    *   Gemini 2.5 Pro for tackling complex problems.
-    *   Deepseek R1 for deep reasoning and analysis.
-    *   Cursor as the advanced IDE for AI-powered development with real-time suggestions.
+    *   Financial modeling libraries and custom Python functions.
+    *   Data scraping tools for external research.
+
+*   **IDE/Plugin Integrations:**
+
+    *   Utilize Cursor—an advanced IDE for AI-powered coding with real-time suggestions—to improve the development workflow.
 
 ## 6. Non-Functional Requirements
 
 *   **Performance:**
 
-    *   The system should complete each financial modeling job within a reasonable response time to not hinder decision-making. While specific limits are not defined, the process should be optimized for efficiency.
+    *   While speed is appreciated, the focus is on model accuracy and quality over rapid response times.
+    *   The system should handle intensive data processing without compromising accuracy.
 
-*   **Security & Privacy:**
+*   **Security:**
 
-    *   The agent is stateless and does not persist any data, ensuring high security and strict adherence to privacy guidelines.
-    *   All financial data is provided by the initiating third-party application and processed without local storage.
+    *   Strict API key-based authentication to ensure that only authorized users access the system.
+    *   Logging and API request traces to enable debugging while preserving the stateless design.
 
 *   **Usability:**
 
-    *   Dashboards must be easy to understand and customizable, adhering to the white label branding requirements.
-    *   The API interface should be straightforward, enabling quick integration with external systems.
+    *   Log outputs and error messages are clear and descriptive, enabling easy debugging.
+    *   Output format options should be easy to select and integrate into user applications.
 
-*   **Scalability:**
+*   **Compliance:**
 
-    *   The modularity of the Agno framework should facilitate adding new integrations and functionalities without overhauling the entire system.
-
-*   **Reliability & Compliance:**
-
-    *   The system should handle API errors gracefully by using retry mechanisms and fallback options for unavailable third-party services.
-    *   It must follow basic compliance and security practices needed for handling sensitive financial data, even though transient.
+    *   Ensure data handling complies with industry standards for financial data processing.
+    *   Maintain consistent versioning and audit trails for generated financial models.
 
 ## 7. Constraints & Assumptions
 
-*   The agent is designed as a one-shot, stateless API service, meaning it processes each request independently and does not maintain any long-term state.
-*   It assumes that the calling application will supply all necessary context required for deep research, financial data retrieval, and modeling.
-*   Pre-existing integrations (such as Plaid or common bookkeeping APIs) are prioritized; future integrations can be added later as needed.
-*   The multi-agent architecture will rely on external AI reasoning tools (GPT 4o, Claude 3.7, Gemini 2.5, Deepseek R1) being available and responsive.
-*   It is assumed that users are versed in financial metrics and will provide accurate data or have the necessary permissions to access third-party financial systems.
-*   The modular design via the Agno framework assumes an environment where new classes or functions can be dynamically integrated if built-in tools fall short.
+*   **Constraints:**
+
+    *   The system will be stateless and serverless, which may affect session management and debugging.
+    *   Reliance on the availability of the Agno Agent Framework and serverless deployment infrastructure.
+    *   The initial build will support only US dollar-based financial modeling.
+
+*   **Assumptions:**
+
+    *   Users will integrate this agent into their existing systems via API, so minimal UI work is expected.
+    *   Natural language input descriptions are clear enough for the AI to deduce the necessary details.
+    *   External data input is optional and when not provided, the system relies on general market research for modeling.
+    *   Users have a basic understanding of financial modeling concepts and what to expect from the outputs.
 
 ## 8. Known Issues & Potential Pitfalls
 
-*   **API Integration Challenges:**
+*   **Agent Coordination:**
 
-    *   Third-party integrations (like Plaid or bookkeeping APIs) may have rate limits or varying endpoints leading to inconsistent data retrieval. To mitigate, design robust error handling and consider caching strategies for repeated information.
+    *   Managing communication and failure between multiple agents may be challenging.
+    *   Quick mitigation: Implement robust error handling where if one agent fails, the user is promptly informed with clear guidance on whether to retry or intervene.
 
-*   **Data Accuracy & Inconsistencies:**
+*   **Data Accuracy & Validation:**
 
-    *   The agent relies heavily on external financial data which can be incomplete or updated irregularly, potentially impacting model accuracy. Regular validation during the data aggregation phase and clear user prompts for any missing data points are necessary.
+    *   Since the system relies on automatic research rather than live market feeds, there is a risk of outdated or inaccurate assumptions.
+    *   Quick mitigation: Incorporate backtesting, peer review, Monte Carlo simulations, and scenario analyses to continuously validate and adjust models.
 
-*   **Multi-Agent Coordination:**
+*   **Serverless Environment Limitations:**
 
-    *   Coordinating multiple agents (deep research, financial modeling, reporting) can lead to synchronization issues if the data exchange is improperly managed. Establish clear protocols for inter-agent communication and processing order.
+    *   Debugging in a stateless, serverless environment can be complex.
+    *   Quick mitigation: Use a streaming log API to send real-time logs to a centralized logging system or the caller’s host.
 
-*   **Security & Compliance Risks:**
+*   **API Rate Limits:**
 
-    *   Transient processing may still face challenges if sensitive data is mishandled during API calls. Strict encryption in transit (e.g., HTTPS) and adherence to security best practices are essential.
+    *   High volume of requests can lead to API rate limits being hit.
+    *   Quick mitigation: Implement rate limiting on the API side and inform users when limits are nearing, with clear guidelines for managing high-volume usage.
 
-*   **Performance Bottlenecks:**
+*   **Customization Flexibility:**
 
-    *   Given that the process involves deep analysis and multiple API integrations, there is a potential for slower response times if any external service lags. Incorporate timeouts and fallback procedures to ensure overall system responsiveness.
+    *   Balancing the flexibility of natural language input with the need for structured data can be difficult.
+    *   Quick mitigation: Provide clear documentation and examples of acceptable input formats to help users describe their investment vehicles accurately.
 
-This PRD aims to cover every aspect of the expert financial modeling agent with clear and unambiguous guidelines for the AI model. Every subsequent document (Tech Stack Document, Frontend Guidelines, Backend Structure, etc.) will draw from this central specification to ensure consistency and thorough implementation.
+This document serves as the single source of truth for building and integrating the Agentic AI for Yield-Generating Investment Vehicle Modeling system. Future documents will extend these guidelines to cover the technical stack, frontend guidelines (if applicable), backend structure, application flowcharts, and implementation plans.
