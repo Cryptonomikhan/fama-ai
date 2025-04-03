@@ -24,6 +24,12 @@ fama-ai/
 ├── models/                 # Model configuration and management
 │   ├── __init__.py
 │   ├── model_factory.py    # Factory for creating LLM instances
+├── reports/                # Report generation
+│   ├── __init__.py
+│   ├── report_generator.py # Report generation in multiple formats
+├── tools/                  # Custom tools for agents
+│   ├── __init__.py
+│   ├── report_tools.py     # Report generation tools for agents
 ├── utils/                  # Utilities and helpers
 │   ├── __init__.py
 │   ├── logging.py          # Logging utilities
@@ -34,6 +40,7 @@ fama-ai/
 │   ├── assumption_generator_example.py # Example of using the Assumption Generator Agent
 │   ├── validator_example.py # Example of using the Validator Agent
 │   ├── coordinator_example.py # Example of using the Agent Coordinator
+│   ├── report_example.py   # Example of using the Report Generation functionality
 ├── tests/                  # Tests
 │   ├── test_api.py         # API tests
 ├── Dockerfile              # Docker configuration
@@ -62,7 +69,30 @@ Generates and validates critical assumptions that drive the financial models. Th
 Validates financial models for accuracy, consistency, and compliance with industry standards. The agent identifies issues categorized by severity (critical, major, minor), provides recommendations for improvement, and assesses risk areas. It also validates specific financial metrics and scenario analyses.
 
 ### Agent Coordinator
-Orchestrates the workflow between specialized agents, ensuring that outputs from one agent feed properly into the inputs of the next. The coordinator manages the overall process and assembles the final output.
+Orchestrates the workflow between specialized agents, ensuring that outputs from one agent feed properly into the inputs of the next. The coordinator manages the overall process and assembles the final output. It also integrates report generation tools to produce professional reports in various formats.
+
+## Report Generation
+
+The Fama AI platform includes a comprehensive report generation system that produces well-formatted reports in multiple formats:
+
+### Report Formats
+- **JSON**: Machine-readable format for API integrations and programmatic access
+- **CSV**: Tabular format for financial data that can be imported into spreadsheet software
+- **PDF**: Professional-quality document format with tables, charts, and formatted text
+
+### Report Contents
+- Executive summary
+- Research findings
+- Financial models (income statement, cash flow)
+- Financial metrics (IRR, NPV, ROI)
+- Scenario analysis (baseline, bull, bear)
+- Validation results
+- Assumption documentation
+
+### Report Generation Methods
+- **Direct**: Generate reports directly using the `generate_report` function
+- **Tool-based**: Agents can generate reports using the provided report generation tools
+- **Team-integrated**: Report generation is integrated into the agent coordination workflow
 
 ## Implementation Status
 
@@ -74,14 +104,29 @@ Orchestrates the workflow between specialized agents, ensuring that outputs from
 - [x] Agent Coordinator
 - [x] API Server
 - [x] Logging System
-- [ ] Report Generation
+- [x] Report Generation
+- [x] Dashboard Builder Agent
+
+## Future Development
+
+### Enhanced Dashboard Builder Features
+
+The Dashboard Builder Agent now creates interactive Next.js dashboards from financial modeling results. Future enhancements include:
+
+- Template Library: Predefined dashboard templates for common investment types
+- Interactive Elements: User input components for scenario modification
+- Data Export: Export functionality for dashboard data
+- Theme Customization: Custom theming options beyond light/dark
+- Collaboration Features: Multi-user editing capabilities
+
+**Planned Implementation Timeline:** Q4 2023
 
 ## Optimized Agent Workflow
 
 The Fama AI platform implements an optimized workflow that follows a logical sequence:
 
 ```
-Research → Assumption Generation → Modeling → Scenario Planning → Validation
+Research → Assumption Generation → Modeling → Scenario Planning → Validation → Report Generation → (Optional) Dashboard Building
 ```
 
 This sequence ensures that each step has the necessary inputs from previous steps:
@@ -89,6 +134,8 @@ This sequence ensures that each step has the necessary inputs from previous step
 - Assumptions drive financial models
 - Financial models enable scenario planning
 - Comprehensive validation ensures overall quality
+- Validated results are compiled into professional reports
+- Reports can be transformed into interactive dashboards (when requested)
 
 For more details, see [the Agent Workflow documentation](documentation/agent_workflow.md).
 
@@ -96,217 +143,66 @@ For more details, see [the Agent Workflow documentation](documentation/agent_wor
 
 ### Option 1: Local Installation
 
-1. Clone the repository
-   ```bash
-   git clone https://github.com/yourusername/fama-ai.git
-   cd fama-ai
-   ```
+1. Clone the repository:
+```
+git clone https://github.com/yourusername/fama-ai.git
+cd fama-ai
+```
 
-2. Create a virtual environment
-   ```bash
-   python -m venv venv
-   ```
+2. Install dependencies:
+```
+pip install -r requirements.txt
+```
 
-3. Activate the virtual environment
-   - On Windows:
-     ```bash
-     venv\Scripts\activate
-     ```
-   - On macOS/Linux:
-     ```bash
-     source venv/bin/activate
-     ```
+3. Configure environment variables:
+```
+cp .env.example .env
+# Edit .env with your API keys and configuration
+```
 
-4. Install dependencies
-   ```bash
-   pip install -r requirements.txt
-   ```
+4. Run the application:
+```
+python -m api.main
+```
 
-5. Copy the example environment file and add your API keys
-   ```bash
-   cp .env.example .env
-   ```
-   Edit the `.env` file and add your API keys for Formation, OpenAI, or Anthropic.
+### Option 2: Docker Installation
 
-6. Run the API server
-   ```bash
-   uvicorn api.main:app --reload
-   ```
+1. Clone the repository:
+```
+git clone https://github.com/yourusername/fama-ai.git
+cd fama-ai
+```
 
-7. Run the example scripts
-   ```bash
-   python examples/coordinator_example.py
-   ```
+2. Configure environment variables:
+```
+cp .env.example .env
+# Edit .env with your API keys and configuration
+```
 
-### Option 2: Docker Deployment
+3. Build and run with Docker Compose:
+```
+docker-compose up -d
+```
 
-1. Clone the repository
-   ```bash
-   git clone https://github.com/yourusername/fama-ai.git
-   cd fama-ai
-   ```
-
-2. Copy the example environment file and add your API keys
-   ```bash
-   cp .env.example .env
-   ```
-   Edit the `.env` file and add your API keys for Formation, OpenAI, or Anthropic.
-
-3. Build and run the Docker container
-   ```bash
-   docker-compose up --build
-   ```
-
-4. The API server will be available at `http://localhost:8000`
-
-### Environment Variables
-
-Create a `.env` file in the project root with the following variables:
-
-- `FORMATION_API_KEY`: API key for Formation models
-- `OPENAI_API_KEY`: API key for OpenAI models
-- `ANTHROPIC_API_KEY`: API key for Anthropic models
-- `API_KEY`: Authentication key for the Fama AI API
-- `LOG_LEVEL`: Logging level (DEBUG, INFO, WARNING, ERROR)
-- `MODEL_PROVIDER`: Default model provider (formation, openai, anthropic)
-- `MODEL_ID`: Default model ID to use with the selected provider
-
-## API Documentation
-
-The Fama AI API follows RESTful principles and provides endpoints for submitting investment vehicle descriptions and retrieving results.
+## Usage
 
 ### API Endpoints
 
-#### Submit Investment Vehicle Description
+- `POST /api/submit`: Submit an investment vehicle for analysis
+- `GET /api/logs/{request_id}`: Get logs and results for a specific request
 
-```
-POST /api/submit
-```
+### Example Scripts
 
-Request body:
-```json
-{
-  "description": "Investment vehicle description (e.g., real estate fund, tokenized asset)",
-  "time_horizon": 5,
-  "risk_factors": "moderate",
-  "output_format": "json",
-  "research_context": "Additional context for research"
-}
-```
+The `examples/` directory contains scripts demonstrating how to use each component of the system:
 
-Response:
-```json
-{
-  "request_id": "uuid-string",
-  "status": "processing",
-  "log_stream_url": "/api/logs/{request_id}"
-}
-```
-
-#### Get Logs for Request
-
-```
-GET /api/logs/{request_id}
-```
-
-Response:
-```json
-{
-  "request_id": "uuid-string",
-  "status": "complete",
-  "logs": [...],
-  "results": {
-    "research_results": {...},
-    "assumptions": {...},
-    "financial_model": {...},
-    "metrics": {...},
-    "scenarios": {...},
-    "validation": {...}
-  }
-}
-```
-
-### OpenAPI Specification
-
-The API is documented using the OpenAPI specification. You can access the full OpenAPI documentation at `/docs` when the server is running, or view the `openapi.yaml` file in the project root.
-
-## Examples
-
-### Research Agent
-
-```python
-from agents.research import ResearchAgent
-
-research_agent = ResearchAgent(provider="formation")
-
-# Research an investment vehicle
-research_results = research_agent.research_investment_vehicle(
-    description="A real estate fund that focuses on multifamily properties in growing metropolitan areas",
-    time_horizon=5,
-    additional_context="Focus on demographic trends and rental yield data"
-)
-
-# Get market conditions
-market_conditions = research_agent.get_market_conditions()
-
-# Get yield data for similar investments
-yield_data = research_agent.get_yield_data(
-    vehicle_type="real estate fund",
-    time_period="last 5 years"
-)
-```
-
-### Agent Coordinator
-
-```python
-from agents.agent_coordinator import AgentCoordinator
-
-coordinator = AgentCoordinator(provider="formation")
-
-# Process an investment vehicle description
-results = coordinator.process_investment_vehicle(
-    description="A tokenized real estate portfolio with properties in major urban centers",
-    time_horizon=5,
-    risk_factors="moderate",
-    output_format="json",
-    research_context="Focus on tokenization regulations and liquidity concerns"
-)
-```
-
-## Testing
-
-To run the tests:
-
-```bash
-pytest
-```
-
-To test the API endpoints specifically:
-
-```bash
-python tests/test_api.py
-```
-
-## Deployment
-
-### Docker
-
-The application includes a Dockerfile and docker-compose.yml for easy deployment. To build and run the Docker container:
-
-```bash
-docker-compose up --build
-```
-
-### Serverless
-
-For serverless deployment on AWS Lambda, Google Cloud Functions, or Azure Functions, follow these steps:
-
-1. Create the necessary serverless configuration files (e.g., `serverless.yml` for AWS Lambda).
-
-2. Deploy the application using the appropriate serverless framework CLI.
-
-3. Update the API endpoint in your client applications to point to the deployed serverless function.
+- `coordinator_example.py`: Demonstrates the full workflow using the Agent Coordinator
+- `research_example.py`: Shows how to use the Research Agent independently
+- `modeling_example.py`: Shows how to use the Modeling Agent independently
+- `scenario_planning_example.py`: Shows how to use the Scenario Planner Agent independently
+- `assumption_generator_example.py`: Shows how to use the Assumption Generator Agent independently
+- `validator_example.py`: Shows how to use the Validator Agent independently
+- `report_example.py`: Shows how to use the Report Generation functionality independently
 
 ## License
 
-This project is proprietary and confidential. Unauthorized copying, distribution, or use is strictly prohibited. 
+This project is licensed under the MIT License - see the LICENSE file for details. 

@@ -20,6 +20,8 @@ from agents.modeling import ModelingAgent
 from agents.scenario_planner import ScenarioPlannerAgent
 from agents.assumption_generator import AssumptionGeneratorAgent
 from agents.validator import ValidatorAgent
+from tools.report_tools import ReportGeneratorTool, PDFReportTool
+from reports.report_generator import generate_report
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -92,6 +94,12 @@ class AgentCoordinator:
             **kwargs
         )
         
+        # Create the report generation tools
+        self.report_tools = [
+            ReportGeneratorTool(output_dir="reports"),
+            PDFReportTool(output_dir="reports")
+        ]
+        
         # Create an Agent that will serve as the coordinator for the team
         self.coordinator = Agent(
             model=coordinator_model,
@@ -109,8 +117,10 @@ class AgentCoordinator:
                 "Build financial models using well-researched assumptions and market data",
                 "Create multiple scenarios to account for different market conditions",
                 "Validate all aspects of the analysis to ensure accuracy and consistency",
-                "Synthesize all outputs into a comprehensive financial analysis with clear documentation"
+                "Synthesize all outputs into a comprehensive financial analysis with clear documentation",
+                "Generate well-formatted reports in requested formats (JSON, CSV, PDF)"
             ],
+            tools=self.report_tools,
             markdown=True
         )
         
@@ -132,8 +142,10 @@ class AgentCoordinator:
                 "STEP 2: Assumption Generator - Based on the research, generate critical modeling assumptions categorized by type (revenue, expenses, capital, market, financial).",
                 "STEP 3: Modeling Agent - Using research data and assumptions, create detailed financial models including income statements, cash flows, and calculate key financial metrics.",
                 "STEP 4: Scenario Planner - Build multiple scenarios (baseline, bull, bear) based on the financial model and conduct impact analysis.",
-                "STEP 5: Validator - Comprehensively validate all aspects of the analysis including models, metrics, scenarios, and assumptions."
+                "STEP 5: Validator - Comprehensively validate all aspects of the analysis including models, metrics, scenarios, and assumptions.",
+                "STEP 6: Report Generation - Generate well-formatted reports in the requested format (JSON, CSV, PDF)."
             ],
+            tools=self.report_tools,
             show_tool_calls=True,
             markdown=True,
             show_members_responses=True  # Set to True to show detailed agent responses in the logs
@@ -231,6 +243,7 @@ class AgentCoordinator:
             - Time Horizon: {time_horizon} years
             - Risk Profile: {risk_factors}
             - Research Context: {kwargs.get("research_context", "General market research")}
+            - Output Format: {output_format}
             
             ## Task
             Please conduct a comprehensive financial analysis of this investment vehicle by following these steps:
@@ -240,6 +253,7 @@ class AgentCoordinator:
             3. Build detailed financial models using these assumptions
             4. Create baseline, bull, and bear scenarios to account for different market conditions
             5. Validate all aspects of the analysis for accuracy, consistency, and compliance
+            6. Generate a comprehensive report in the requested format ({output_format})
             
             The analysis should include the following components:
             - Comprehensive market research including competitive landscape
@@ -250,6 +264,8 @@ class AgentCoordinator:
             - Validation report highlighting any issues or recommendations
             
             Please provide detailed explanations and documentation for all aspects of the analysis.
+            
+            After completing the analysis, please generate a report in {output_format} format using the report_generator or pdf_report_generator tool.
         """)
         
         # Process the investment vehicle with the team
@@ -258,8 +274,9 @@ class AgentCoordinator:
             response = self.team.run(prompt)
             logger.info("Team-based analysis completed")
             
-            # For now, we'll return a simplified structure with the response content
-            # In a real implementation, we would parse the team's response to extract structured data
+            # Extract the results from the team's response
+            # In a real implementation, this would parse the structured data from the response
+            # For now, we'll just include the response content along with metadata
             results = {
                 "request_id": request_id,
                 "description": description,
@@ -269,6 +286,18 @@ class AgentCoordinator:
                 "status": "complete",
                 "output_format": output_format
             }
+            
+            # Generate a report from the results using the direct method
+            # This ensures we have a report even if the team didn't generate one
+            report_path = generate_report(
+                results=results,
+                format=output_format,
+                filename=f"report_{request_id[:8]}",
+                output_dir="reports"
+            )
+            
+            # Add the report path to the results
+            results["report_path"] = report_path
             
             return results
             
@@ -426,7 +455,19 @@ class AgentCoordinator:
             "output_format": output_format
         }
         
-        logger.info("Investment vehicle processing completed")
+        # Step 6: Report Generation Phase
+        logger.info(f"Starting report generation phase in {output_format} format")
+        report_path = generate_report(
+            results=results,
+            format=output_format,
+            filename=f"report_{request_id[:8]}",
+            output_dir="reports"
+        )
+        
+        # Add the report path to the results
+        results["report_path"] = report_path
+        
+        logger.info(f"Investment vehicle processing completed. Report generated at {report_path}")
         return results
     
     async def process_investment_vehicle_async(
