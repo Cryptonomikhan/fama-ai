@@ -87,8 +87,6 @@ class AssumptionGeneratorAgent:
         research_data: Dict[str, Any],
         market_conditions: Dict[str, Any],
         yield_data: Dict[str, Any],
-        financial_model: Dict[str, Any],
-        scenarios: Dict[str, Any],
         time_horizon: int = 5,
         risk_factors: str = "moderate",
         **kwargs: Any
@@ -101,8 +99,6 @@ class AssumptionGeneratorAgent:
             research_data: Research data about the investment vehicle
             market_conditions: Current and projected market conditions
             yield_data: Historical and projected yield data for similar investments
-            financial_model: The base financial model
-            scenarios: The generated scenarios (baseline, bull, bear)
             time_horizon: Time horizon for the investment in years
             risk_factors: Risk factors to consider (conservative, moderate, aggressive)
             **kwargs: Additional parameters for the assumption generation process
@@ -125,12 +121,6 @@ class AssumptionGeneratorAgent:
             
             # Yield Data
             {yield_data.get('yield_data', 'No yield data available')}
-            
-            # Financial Model Summary
-            {financial_model.get('raw_model', 'No financial model available')}
-            
-            # Scenarios
-            {scenarios.get('raw_scenarios', 'No scenarios available')}
             
             # Task
             Create comprehensive assumptions for the financial model of this investment vehicle.
@@ -276,11 +266,11 @@ class AssumptionGeneratorAgent:
         
         assumptions = {
             "raw_assumptions": raw_assumptions,
-            "revenue": {},
-            "operating_expenses": {},
-            "capital_expenditures": {},
-            "market": {},
-            "financial": {}
+            "revenue": {"raw": None},
+            "operating_expenses": {"raw": None},
+            "capital_expenditures": {"raw": None},
+            "market": {"raw": None},
+            "financial": {"raw": None}
         }
         
         # Extract sections based on markdown headers
@@ -324,10 +314,10 @@ class AssumptionGeneratorAgent:
         
         validation_results = {
             "raw_validation": raw_validation,
-            "consistency_check": {},
-            "realism_assessment": {},
-            "risk_evaluation": {},
-            "gaps_analysis": {}
+            "consistency_check": {"raw": None},
+            "realism_assessment": {"raw": None},
+            "risk_evaluation": {"raw": None},
+            "gaps_analysis": {"raw": None}
         }
         
         # Extract sections based on markdown headers

@@ -249,9 +249,24 @@ class ScenarioPlannerAgent:
         scenarios = {
             "raw_scenarios": raw_scenarios,
             "time_horizon": time_horizon,
-            "baseline": {},
-            "bull": {},
-            "bear": {}
+            "baseline": {
+                "description": None,
+                "income_statement": None,
+                "cash_flow": None,
+                "metrics": None
+            },
+            "bull": {
+                "description": None,
+                "income_statement": None,
+                "cash_flow": None,
+                "metrics": None
+            },
+            "bear": {
+                "description": None,
+                "income_statement": None,
+                "cash_flow": None,
+                "metrics": None
+            }
         }
         
         # Extract sections based on markdown headers
@@ -298,7 +313,7 @@ class ScenarioPlannerAgent:
                     scenarios["bear"]["metrics"] = section_content
         
         # If we couldn't extract structured data, at least provide baseline scenarios
-        if not scenarios["baseline"]:
+        if not scenarios["baseline"]["description"]:
             baseline_content = ""
             bull_content = ""
             bear_content = ""
@@ -347,9 +362,9 @@ class ScenarioPlannerAgent:
         
         impact_analysis = {
             "raw_analysis": raw_analysis,
-            "comparative_analysis": {},
-            "risk_assessment": {},
-            "decision_framework": {}
+            "comparative_analysis": {"raw": None},
+            "risk_assessment": {"raw": None},
+            "decision_framework": {"raw": None}
         }
         
         # Extract sections based on markdown headers

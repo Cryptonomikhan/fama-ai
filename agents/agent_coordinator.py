@@ -334,6 +334,9 @@ class AgentCoordinator:
         """
         logger.info("Processing investment vehicle step-by-step")
         
+        # Get the update callback if provided
+        update_callback = kwargs.get("update_callback")
+        
         # Step 1: Research Phase
         logger.info("Starting research phase")
         research_results = self.research_agent.research_investment_vehicle(
@@ -341,15 +344,22 @@ class AgentCoordinator:
             time_horizon=time_horizon,
             additional_context=kwargs.get("research_context")
         )
+        # Send update if callback is provided
+        if update_callback:
+            update_callback("research", research_results)
         
         # Get additional market conditions
         market_conditions = self.research_agent.get_market_conditions()
+        if update_callback:
+            update_callback("market_conditions", market_conditions)
         
         # Get yield data for similar investments
         yield_data = self.research_agent.get_yield_data(
             vehicle_type=kwargs.get("vehicle_type", "yield-generating investment"),
             time_period=f"last {time_horizon} years"
         )
+        if update_callback:
+            update_callback("yield_data", yield_data)
         
         # Step 2: Assumption Generation Phase (moved earlier in the workflow)
         logger.info("Starting assumption generation phase")
@@ -361,6 +371,8 @@ class AgentCoordinator:
             time_horizon=time_horizon,
             risk_factors=risk_factors
         )
+        if update_callback:
+            update_callback("assumptions", assumptions)
         
         # Validate the assumptions
         assumption_validation = self.assumption_generator.validate_assumptions(
@@ -368,6 +380,8 @@ class AgentCoordinator:
             research_data=research_results,
             market_conditions=market_conditions
         )
+        if update_callback:
+            update_callback("assumption_validation", assumption_validation)
         
         # Step 3: Modeling Phase (now uses validated assumptions)
         logger.info("Starting modeling phase")
@@ -380,6 +394,8 @@ class AgentCoordinator:
             time_horizon=time_horizon,
             risk_factors=risk_factors
         )
+        if update_callback:
+            update_callback("financial_model", financial_model)
         
         # Generate financial metrics
         metrics = self.modeling_agent.generate_metrics(
@@ -387,6 +403,8 @@ class AgentCoordinator:
             time_horizon=time_horizon,
             discount_rate=kwargs.get("discount_rate", 0.1)
         )
+        if update_callback:
+            update_callback("metrics", metrics)
         
         # Step 4: Scenario Planning Phase
         logger.info("Starting scenario planning phase")
@@ -399,12 +417,16 @@ class AgentCoordinator:
             risk_factors=risk_factors,
             time_horizon=time_horizon
         )
+        if update_callback:
+            update_callback("scenarios", scenarios)
         
         # Analyze the impact of different scenarios
         scenario_impact = self.scenario_planner.analyze_scenario_impact(
             scenarios=scenarios,
             financial_metrics=metrics
         )
+        if update_callback:
+            update_callback("scenario_impact", scenario_impact)
         
         # Step 5: Validation Phase
         logger.info("Starting validation phase")
@@ -417,12 +439,16 @@ class AgentCoordinator:
             research_data=research_results,
             market_conditions=market_conditions
         )
+        if update_callback:
+            update_callback("validation", validation_results)
         
         # Additional validation of specific components
         metric_validation = self.validator.validate_metrics(
             metrics=metrics,
             financial_model=financial_model
         )
+        if update_callback:
+            update_callback("metric_validation", metric_validation)
         
         scenario_validation = self.validator.validate_scenarios(
             scenarios=scenarios,
@@ -430,6 +456,8 @@ class AgentCoordinator:
             assumptions=assumptions,
             market_conditions=market_conditions
         )
+        if update_callback:
+            update_callback("scenario_validation", scenario_validation)
         
         # Combine results
         results = {
@@ -466,6 +494,10 @@ class AgentCoordinator:
         
         # Add the report path to the results
         results["report_path"] = report_path
+        
+        # Final update with report path
+        if update_callback:
+            update_callback("report", {"path": report_path})
         
         logger.info(f"Investment vehicle processing completed. Report generated at {report_path}")
         return results

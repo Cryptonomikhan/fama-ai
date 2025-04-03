@@ -6,6 +6,7 @@ This agent is responsible for validating financial models and ensuring
 their accuracy, consistency, and compliance with industry standards.
 """
 import logging
+import re
 from typing import Dict, Any, List, Optional
 from textwrap import dedent
 
@@ -360,13 +361,18 @@ class ValidatorAgent:
                 "major": [],
                 "minor": []
             },
-            "recommendations": [],
-            "risk_areas": [],
-            "compliance_notes": []
+            "recommendations": {
+                "items": []
+            },
+            "risk_areas": {
+                "items": []
+            },
+            "compliance_notes": {
+                "items": []
+            }
         }
         
         # Extract the overall score using a simple pattern match
-        import re
         score_match = re.search(r'overall.*score.*?(\d+)', raw_validation, re.IGNORECASE)
         if score_match:
             try:
@@ -408,7 +414,7 @@ class ValidatorAgent:
                 for line in section_content.split("\n"):
                     if line.strip().startswith("- ") or line.strip().startswith("* "):
                         recommendation = line.strip()[2:].strip()
-                        validation_results["recommendations"].append(recommendation)
+                        validation_results["recommendations"]["items"].append(recommendation)
             
             elif "risk" in section_title.lower() or "uncertainty" in section_title.lower():
                 validation_results["risk_areas"]["raw"] = section_content
@@ -417,7 +423,7 @@ class ValidatorAgent:
                 for line in section_content.split("\n"):
                     if line.strip().startswith("- ") or line.strip().startswith("* "):
                         risk_area = line.strip()[2:].strip()
-                        validation_results["risk_areas"].append(risk_area)
+                        validation_results["risk_areas"]["items"].append(risk_area)
             
             elif "compliance" in section_title.lower():
                 validation_results["compliance_notes"]["raw"] = section_content
@@ -426,7 +432,7 @@ class ValidatorAgent:
                 for line in section_content.split("\n"):
                     if line.strip().startswith("- ") or line.strip().startswith("* "):
                         compliance_note = line.strip()[2:].strip()
-                        validation_results["compliance_notes"].append(compliance_note)
+                        validation_results["compliance_notes"]["items"].append(compliance_note)
         
         return validation_results
     

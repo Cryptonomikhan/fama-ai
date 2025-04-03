@@ -247,11 +247,11 @@ class ModelingAgent:
             "raw_model": raw_model,
             "time_horizon": time_horizon,
             "risk_factors": risk_factors,
-            "assumptions": {},
-            "income_statement": {},
-            "cash_flow": {},
-            "metrics": {},
-            "sensitivity": {}
+            "assumptions": {"raw": None},
+            "income_statement": {"raw": None},
+            "cash_flow": {"raw": None},
+            "metrics": {"raw": None},
+            "sensitivity": {"raw": None}
         }
         
         # Extract sections based on markdown headers
@@ -265,15 +265,15 @@ class ModelingAgent:
             section_content = "\n".join(section_lines[1:]).strip()
             
             if "assumption" in section_title.lower():
-                financial_model["assumptions"] = {"raw": section_content}
+                financial_model["assumptions"]["raw"] = section_content
             elif "income" in section_title.lower() or "statement" in section_title.lower():
-                financial_model["income_statement"] = {"raw": section_content}
+                financial_model["income_statement"]["raw"] = section_content
             elif "cash flow" in section_title.lower():
-                financial_model["cash_flow"] = {"raw": section_content}
+                financial_model["cash_flow"]["raw"] = section_content
             elif "metric" in section_title.lower() or "irr" in section_title.lower() or "npv" in section_title.lower():
-                financial_model["metrics"] = {"raw": section_content}
+                financial_model["metrics"]["raw"] = section_content
             elif "sensitivity" in section_title.lower() or "scenario" in section_title.lower():
-                financial_model["sensitivity"] = {"raw": section_content}
+                financial_model["sensitivity"]["raw"] = section_content
         
         return financial_model
     

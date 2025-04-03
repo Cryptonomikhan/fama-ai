@@ -1,0 +1,14 @@
+# Add these lines to your .gitignore file
+venv/
+env/
+.env/
+.venv/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.coverage
+htmlcov/
+.pytest_cache/

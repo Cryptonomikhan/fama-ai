@@ -7,7 +7,6 @@ by agents in the Fama AI platform.
 """
 import logging
 from typing import Dict, Any, List, Optional
-from agno.tools import Tool
 
 logger = logging.getLogger(__name__)
 

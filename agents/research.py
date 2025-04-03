@@ -5,6 +5,8 @@ Research Agent for Fama AI.
 This agent is responsible for domain-specific research for financial modeling.
 """
 import logging
+import time
+import random
 from typing import Dict, Any, List, Optional
 from textwrap import dedent
 
@@ -16,6 +18,54 @@ from models.model_factory import create_model
 
 # Set up logging
 logger = logging.getLogger(__name__)
+
+class RateLimitedDuckDuckGoTools(DuckDuckGoTools):
+    """
+    A wrapper around DuckDuckGoTools that handles rate limiting with retry logic.
+    """
+    
+    def __init__(self, max_retries: int = 3, base_delay: float = 2.0):
+        """
+        Initialize the rate-limited DuckDuckGo tools.
+        
+        Args:
+            max_retries: Maximum number of retries for rate-limited requests
+            base_delay: Base delay in seconds between retries (will be multiplied by retry count)
+        """
+        super().__init__()
+        self.max_retries = max_retries
+        self.base_delay = base_delay
+    
+    def search(self, query: str, **kwargs: Any) -> List[Dict[str, str]]:
+        """
+        Search DuckDuckGo with retry logic for rate limits.
+        
+        Args:
+            query: The search query
+            **kwargs: Additional parameters for the search
+            
+        Returns:
+            List of search results
+        """
+        retries = 0
+        while retries <= self.max_retries:
+            try:
+                return super().search(query, **kwargs)
+            except Exception as e:
+                if "Ratelimit" in str(e) and retries < self.max_retries:
+                    # Calculate delay with exponential backoff and jitter
+                    delay = self.base_delay * (2 ** retries) * (0.5 + random.random())
+                    logger.warning(f"DuckDuckGo rate limit hit. Retrying in {delay:.2f} seconds (retry {retries+1}/{self.max_retries})")
+                    time.sleep(delay)
+                    retries += 1
+                else:
+                    logger.error(f"Error searching DuckDuckGo: {e}")
+                    # Return empty results if all retries fail or for other errors
+                    return []
+        
+        # If we've exhausted retries, return empty results
+        logger.error("Exhausted all retries for DuckDuckGo search")
+        return []
 
 class ResearchAgent:
     """
@@ -113,7 +163,7 @@ class ResearchAgent:
                 ## Sources
                 {Citations for all key data points}
             """),
-            tools=[DuckDuckGoTools()],
+            tools=[RateLimitedDuckDuckGoTools()],
             markdown=True
         )
         
