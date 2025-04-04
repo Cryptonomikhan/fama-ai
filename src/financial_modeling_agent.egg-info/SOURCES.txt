@@ -1,0 +1,14 @@
+README.md
+setup.py
+src/agents/__init__.py
+src/agents/searcher.py
+src/api/__init__.py
+src/financial_modeling_agent.egg-info/PKG-INFO
+src/financial_modeling_agent.egg-info/SOURCES.txt
+src/financial_modeling_agent.egg-info/dependency_links.txt
+src/financial_modeling_agent.egg-info/top_level.txt
+src/mcp/__init__.py
+src/models/__init__.py
+src/models/factory.py
+src/models/formation.py
+src/tools/__init__.py
