@@ -317,8 +317,7 @@ if __name__ == "__main__":
     # Run the search agent
     searcher = SearchingAgent(
         provider="openai",
-        model_id="gpt-4o",
-        use_spider=False
+        model_id="gpt-4o"
     )
     
     print("\n--- Running Search Agent ---\n")
@@ -333,8 +332,7 @@ if __name__ == "__main__":
     assumption_generator = AssumptionGeneratorAgent(
         provider="openai",
         model_id="gpt-4o",
-        data=searcher_data,
-        use_spider=False
+        data=searcher_data
     )
     
     assumption_response = assumption_generator.agent.run("Build assumptions based on the provided data relevant to building a financial model for a 3 year time frame for a small real estate fund that invests in AI server farms")

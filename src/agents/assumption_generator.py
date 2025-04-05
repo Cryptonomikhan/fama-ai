@@ -1,10 +1,9 @@
 from agno.agent import Agent, RunResponse
 from agno.tools.thinking import ThinkingTools
-from agno.tools.crawl4ai import Crawl4aiTools
-from agno.tools.spider import SpiderTools
 from agno.tools.firecrawl import FirecrawlTools
 from src.models.factory import create_model
 from src.agents.searcher import SearchingAgent
+from src.tools.website_scraper import WebsiteScraperTools
 import logging
 from textwrap import dedent
 from typing import Any, Optional, Iterator, List
@@ -13,9 +12,6 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Check if Spider API key exists
-has_spider_api_key = bool(os.environ.get("SPIDER_API_KEY"))
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +24,8 @@ class AssumptionGeneratorAgent:
         temperature: float = 0.1,
         max_tokens: Optional[int] = None,
         firecrawl: bool = False,
+        firecrawl_api_key: Optional[str] = None,
         data: Optional[str] = None,
-        use_spider: Optional[bool] = None,
         additional_tools: List = None,
         **kwargs: Any
     ):
@@ -38,9 +34,6 @@ class AssumptionGeneratorAgent:
         
         # Store the data first
         self.data = data
-        
-        # Determine whether to use Spider based on API key availability
-        use_spider = has_spider_api_key if use_spider is None else use_spider
 
         model = create_model(
             provider=provider,
@@ -53,17 +46,21 @@ class AssumptionGeneratorAgent:
         # Build tools list based on availability
         tools = [ThinkingTools()]
         
-        if firecrawl:
-            tools.append(FirecrawlTools(scrape=True, crawl=True))
-        else:
-            tools.append(Crawl4aiTools(max_length=None))
-            
-        # Only add Spider if we have an API key
-        if use_spider:
-            tools.append(SpiderTools())
-            logger.info("Spider tool enabled")
-        else:
-            logger.info("Spider tool disabled (no API key)")
+        # Always add our custom WebsiteScraperTools
+        tools.append(WebsiteScraperTools())
+        logger.info("Added WebsiteScraperTools for webpage crawling")
+        
+        # Add Firecrawl if explicitly requested and API key is provided
+        if firecrawl and firecrawl_api_key:
+            tools.append(FirecrawlTools(scrape=True, crawl=True, api_key=firecrawl_api_key))
+            logger.info("Firecrawl tool enabled")
+        elif firecrawl:
+            firecrawl_api_key = os.environ.get("FIRECRAWL_API_KEY")
+            if firecrawl_api_key:
+                tools.append(FirecrawlTools(scrape=True, crawl=True, api_key=firecrawl_api_key))
+                logger.info("Firecrawl tool enabled with API key from environment")
+            else:
+                logger.warning("Firecrawl requested but no API key provided - falling back to WebsiteScraperTools only")
 
         # Add any additional tools provided
         if additional_tools:
@@ -81,15 +78,19 @@ class AssumptionGeneratorAgent:
                 - Iterate over tool results for correctness
 
             ## Rules
-                - Use the provided tools to gather data from any URLs provided in {data_placeholder}
-                - Use the think tool to think about whether the data collected is relevant to the task at hand.
-                - If the data is relevant to the task at hand use it to derive/deduce assumptions for the financial model.
-                - Whenever you come across quantitative data, you will structure the data in a way that is easy for other tools to use.
-                - Structured quantitative data may be in JSON, Comma Separated, Tab Separated or Table format in markdown.
-                - For non-quantitative data it will be written out in markdown format so that it can be parsed and used later.
-                - Its expected that you will use the think tool generously to jot down thoughts and ideas.
-                - Your job is to build comprehensive, yet concise and reasonable assumptions that will be used to generate a sophisticated financial model for an investment opportunity being assessed. 
-                - When you are done thinking take additional actions if necessary to complete the task.
+                - Use the provided data as your primary source of information
+                - If you need to verify information or get additional details from URLs in the data, use the WebsiteScraperTools:
+                  - scrape_url: Extract content from a single URL
+                  - scrape_multiple_urls: Extract content from multiple URLs in parallel
+                  - summarize_webpage: Get a summary of a webpage including title, content, and links
+                - Use the think tool to evaluate whether the data is relevant to generating assumptions
+                - If the data is relevant, use it to derive/deduce assumptions for the financial model
+                - Create three distinct sets of assumptions: bull case, baseline case, and bear case
+                - Structure quantitative data in JSON, CSV, TSV, or markdown table format for easy use by other tools
+                - Format non-quantitative assumptions in markdown for clarity and ease of use
+                - Use the think tool generously to develop your assumptions with clear reasoning
+                - Your job is to build comprehensive, defensible, and realistic assumptions for the financial model
+                - Always justify your assumptions with data and cite sources where applicable
         """)
         
         # Format the instructions with the data
@@ -128,8 +129,7 @@ if __name__ == "__main__":
 
     searcher = SearchingAgent(
         provider="openai",
-        model_id="gpt-4o",
-        use_spider=False
+        model_id="gpt-4o"
     )
 
     response: RunResponse = searcher.agent.run("Gather the information necessary to build a financial model for a 3 year timeframe for a small real estate fund that invests in AI server farms")
@@ -140,7 +140,6 @@ if __name__ == "__main__":
     assumption_generator = AssumptionGeneratorAgent(
         provider="openai",
         model_id="gpt-4o",
-        data=data,
-        use_spider=False  # Explicitly disable Spider tool regardless of API key
+        data=data
     )
     assumption_generator.agent.print_response("Build assumptions based on the provided data relevant to building a financial model for a 3 year time frame for a small real estate fund that invests in AI server farms", stream=True, markdown=True)

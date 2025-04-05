@@ -1,7 +1,7 @@
+# Core dependencies
 agno>=1.2.7
 httpx>=0.24.0
-python-dotenv==1.0.0
-requests>=2.31.0
+python-dotenv>=1.0.0
 
 # Model providers
 openai>=1.0.0
@@ -9,28 +9,15 @@ anthropic>=0.7.0
 
 # Tools and extensions
 duckduckgo-search>=3.0.0
-crawl4ai>=0.5.0
-firecrawl-py>=1.15.0
-spider-client>=0.1.0
 
-# Financial modeling and visualization
+# Financial modeling
 numpy>=1.24.0
 pandas>=2.0.0
-numpy-financial>=1.0.0
 reportlab>=3.6.0
-matplotlib>=3.7.0
-seaborn>=0.12.0
-plotly>=5.13.0
-kaleido>=0.2.1  # For static image export
-
-# Data processing
-scipy>=1.10.0
-statsmodels>=0.13.5
 
 # API and server
 fastapi>=0.110.0
 uvicorn>=0.23.0
-websockets>=11.0.0  # For real-time updates
 
 # Testing
 pytest>=7.4.0

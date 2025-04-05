@@ -12,9 +12,6 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-# Check if Spider API key exists
-has_spider_api_key = bool(os.environ.get("SPIDER_API_KEY"))
-
 logger = logging.getLogger(__name__)
 
 
@@ -102,8 +99,7 @@ if __name__ == "__main__":
 
     searcher = SearchingAgent(
         provider="openai",
-        model_id="gpt-4o",
-        use_spider=False
+        model_id="gpt-4o"
     )
 
     searcher_response: RunResponse = searcher.agent.run("Gather the information necessary to build a financial model for a 3 year timeframe for a small real estate fund that invests in AI server farms")
@@ -114,8 +110,7 @@ if __name__ == "__main__":
     assumption_generator = AssumptionGeneratorAgent(
         provider="openai",
         model_id="gpt-4o",
-        data=searcher_data,
-        use_spider=False  # Explicitly disable Spider tool regardless of API key
+        data=searcher_data
     )
 
     assumption_response: RunResponse = assumption_generator.agent.run("Build assumptions based on the provided data relevant to building a financial model for a 3 year time frame for a small real estate fund that invests in AI server farms")

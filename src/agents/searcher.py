@@ -1,10 +1,9 @@
 from agno.agent import Agent
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.tools.thinking import ThinkingTools
-from agno.tools.crawl4ai import Crawl4aiTools
 from agno.tools.firecrawl import FirecrawlTools
-from agno.tools.spider import SpiderTools
 from src.models.factory import create_model
+from src.tools.website_scraper import WebsiteScraperTools
 import logging
 from textwrap import dedent
 from typing import Any, Optional, List
@@ -13,9 +12,6 @@ from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Check if Spider API key exists
-has_spider_api_key = bool(os.environ.get("SPIDER_API_KEY"))
 
 logger = logging.getLogger(__name__)
 
@@ -28,15 +24,12 @@ class SearchingAgent:
         temperature: float = 0.1,
         max_tokens: Optional[int] = None,
         firecrawl: bool = False,
-        use_spider: Optional[bool] = None,
+        firecrawl_api_key: Optional[str] = None,
         additional_tools: List = None,
         **kwargs: Any
     ):
 
         logger.info("Initializing WebSearch Agent ")
-        
-        # Determine whether to use Spider based on API key availability
-        use_spider = has_spider_api_key if use_spider is None else use_spider
         
         model = create_model(
             provider=provider,
@@ -49,17 +42,21 @@ class SearchingAgent:
         # Build tools list
         tools = [DuckDuckGoTools(), ThinkingTools()]
         
-        if firecrawl:
-            tools.append(FirecrawlTools(scrape=True, crawl=True))
-        else:
-            tools.append(Crawl4aiTools(max_length=None))
-            
-        # Only add Spider if we have an API key
-        if use_spider:
-            tools.append(SpiderTools())
-            logger.info("Spider tool enabled")
-        else:
-            logger.info("Spider tool disabled (no API key)")
+        # Always add our custom WebsiteScraperTools
+        tools.append(WebsiteScraperTools())
+        logger.info("Added WebsiteScraperTools for webpage crawling")
+        
+        # Add Firecrawl if explicitly requested and API key is provided
+        if firecrawl and firecrawl_api_key:
+            tools.append(FirecrawlTools(scrape=True, crawl=True, api_key=firecrawl_api_key))
+            logger.info("Firecrawl tool enabled")
+        elif firecrawl:
+            firecrawl_api_key = os.environ.get("FIRECRAWL_API_KEY")
+            if firecrawl_api_key:
+                tools.append(FirecrawlTools(scrape=True, crawl=True, api_key=firecrawl_api_key))
+                logger.info("Firecrawl tool enabled with API key from environment")
+            else:
+                logger.warning("Firecrawl requested but no API key provided - falling back to WebsiteScraperTools only")
             
         # Add any additional tools provided
         if additional_tools:
@@ -67,7 +64,7 @@ class SearchingAgent:
                 tools.append(tool)
                 logger.info(f"Added additional tool: {tool.name}")
 
-        # Update instructions to mention the availability of website scraper if present
+        # Update instructions to mention our website scraper
         instructions = dedent("""\
             ## Using the think tool
             Before taking any action or responding to the user after receiving tool results, use the think tool as a scratchpad to:
@@ -77,16 +74,19 @@ class SearchingAgent:
                 - Iterate over tool results for correctness
 
             ## Rules
-                - Use the DuckDuckGo and available crawling tools to search the web for relevant information
-                - When you find a site that may contain relevant information use the crawling tools provided to crawl and scrape the website.
-                - Convert the data found into the website into a format that is easy to reason about.
-                - Use the think tool to think about whether the data collected is relevant to the task at hand.
-                - Whenever you come across quantitative data, you will structure the data in a way that is easy for other tools to use.
-                - Structured quantitative data may be in JSON, Comma Separated, Tab Separated or Table format in markdown.
-                - For non-quantitative data it will be written out in markdown format so that it can be parsed and used later.
-                - Its expected that you will use the think tool generously to jot down thoughts and ideas.
-                - Your job is to search for and gather information, and to present the information in a comprehensible and complete manner.
-                - When you are done thinking take additional actions if necessary to complete the task.
+                - Use the DuckDuckGo search tool to find relevant information on the web
+                - When you find a site that may contain relevant information, use the WebsiteScraperTools to:
+                  - scrape_url: Extract content from a single URL
+                  - scrape_multiple_urls: Extract content from multiple URLs in parallel
+                  - summarize_webpage: Get a summary of a webpage including title, content, and links
+                - Convert the data found into a format that is easy to reason about
+                - Use the think tool to evaluate whether the collected data is relevant to the task
+                - Structure quantitative data in JSON, CSV, TSV, or markdown table format for easy use by other tools
+                - Format non-quantitative data in markdown for parsing and later use
+                - Use the think tool generously to develop thoughts and ideas
+                - Your job is to gather comprehensive information and present it in a clear, well-organized manner
+                - When done thinking, take additional actions if necessary to complete the task
+                - Always provide sources for the information you gather, including URLs
         """)
 
         self.agent = Agent(
@@ -122,8 +122,7 @@ if __name__ == "__main__":
 
     searcher = SearchingAgent(
         provider="openai",
-        model_id="gpt-4o",
-        use_spider=False  # Explicitly disable Spider tool regardless of API key
+        model_id="gpt-4o"
     )
 
     searcher.agent.print_response("Gather the information necessary to build a financial model for a 3 year timeframe for a small real estate fund that invests in AI server farms", stream=True)
