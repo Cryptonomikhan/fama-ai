@@ -7,7 +7,7 @@ from agno.tools.spider import SpiderTools
 from src.models.factory import create_model
 import logging
 from textwrap import dedent
-from typing import Any, Optional
+from typing import Any, Optional, List
 import os
 from dotenv import load_dotenv
 
@@ -29,6 +29,7 @@ class SearchingAgent:
         max_tokens: Optional[int] = None,
         firecrawl: bool = False,
         use_spider: Optional[bool] = None,
+        additional_tools: List = None,
         **kwargs: Any
     ):
 
@@ -59,6 +60,34 @@ class SearchingAgent:
             logger.info("Spider tool enabled")
         else:
             logger.info("Spider tool disabled (no API key)")
+            
+        # Add any additional tools provided
+        if additional_tools:
+            for tool in additional_tools:
+                tools.append(tool)
+                logger.info(f"Added additional tool: {tool.name}")
+
+        # Update instructions to mention the availability of website scraper if present
+        instructions = dedent("""\
+            ## Using the think tool
+            Before taking any action or responding to the user after receiving tool results, use the think tool as a scratchpad to:
+                - List the specific rules that apply to the current request
+                - Check if all required information is collected
+                - Verify that the planned action complies with all policies
+                - Iterate over tool results for correctness
+
+            ## Rules
+                - Use the DuckDuckGo and available crawling tools to search the web for relevant information
+                - When you find a site that may contain relevant information use the crawling tools provided to crawl and scrape the website.
+                - Convert the data found into the website into a format that is easy to reason about.
+                - Use the think tool to think about whether the data collected is relevant to the task at hand.
+                - Whenever you come across quantitative data, you will structure the data in a way that is easy for other tools to use.
+                - Structured quantitative data may be in JSON, Comma Separated, Tab Separated or Table format in markdown.
+                - For non-quantitative data it will be written out in markdown format so that it can be parsed and used later.
+                - Its expected that you will use the think tool generously to jot down thoughts and ideas.
+                - Your job is to search for and gather information, and to present the information in a comprehensible and complete manner.
+                - When you are done thinking take additional actions if necessary to complete the task.
+        """)
 
         self.agent = Agent(
             name="Web Search Agent",
@@ -83,26 +112,7 @@ class SearchingAgent:
                 You always organize data and provide sources for it, including
                 links to webpages where you found the data.
             """),
-            instructions=dedent("""\
-                ## Using the think tool
-                Before taking any action or responding to the user after receiving tool results, use the think tool as a scratchpad to:
-                    - List the specific rules that apply to the current request
-                    - Check if all required information is collected
-                    - Verify that the planned action complies with all policies
-                    - Iterate over tool results for correctness
-
-                ## Rules
-                    - Use the DuckDuckGo and available crawling tools to search the web for relevant information
-                    - When you find a site that may contain relevant information use the crawling tools provided to crawl and scrape the website.
-                    - Convert the data found into the website into a format that is easy to reason about.
-                    - Use the think tool to think about whether the data collected is relevant to the task at hand.
-                    - Whenever you come across quantitative data, you will structure the data in a way that is easy for other tools to use.
-                    - Structured quantitative data may be in JSON, Comma Separated, Tab Separated or Table format in markdown.
-                    - For non-quantitative data it will be written out in markdown format so that it can be parsed and used later.
-                    - Its expected that you will use the think tool generously to jot down thoughts and ideas.
-                    - Your job is to search for and gather information, and to present the information in a comprehensible and complete manner.
-                    - When you are done thinking take additional actions if necessary to complete the task.
-            """),
+            instructions=instructions,
             show_tool_calls=True,
             markdown=True
         )

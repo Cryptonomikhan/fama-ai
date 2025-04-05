@@ -7,7 +7,7 @@ from src.models.factory import create_model
 from src.agents.searcher import SearchingAgent
 import logging
 from textwrap import dedent
-from typing import Any, Optional, Iterator
+from typing import Any, Optional, Iterator, List
 import os
 from dotenv import load_dotenv
 
@@ -30,6 +30,7 @@ class AssumptionGeneratorAgent:
         firecrawl: bool = False,
         data: Optional[str] = None,
         use_spider: Optional[bool] = None,
+        additional_tools: List = None,
         **kwargs: Any
     ):
 
@@ -63,6 +64,12 @@ class AssumptionGeneratorAgent:
             logger.info("Spider tool enabled")
         else:
             logger.info("Spider tool disabled (no API key)")
+
+        # Add any additional tools provided
+        if additional_tools:
+            for tool in additional_tools:
+                tools.append(tool)
+                logger.info(f"Added additional tool: {tool.name}")
 
         # Define base instructions template
         instructions_template = dedent("""\

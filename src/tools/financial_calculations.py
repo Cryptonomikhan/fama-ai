@@ -458,7 +458,7 @@ class FinancialCalculationTools(Toolkit):
                     md_output += f"| NPV | " + " | ".join(npv_values) + " |\n"
                     
                 if "irr_results" in data:
-                    irr_values = [f"{v:.2%}" if v is not None else "N/A" for v in data["irr_results"]]
+                    irr_values = [f"{v:.2%}" if v is not None and isinstance(v, (int, float)) else "N/A" for v in data["irr_results"]]
                     md_output += f"| IRR (%) | " + " | ".join(irr_values) + " |\n"
                 
                 # Add payback periods if available

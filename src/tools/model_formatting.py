@@ -257,8 +257,11 @@ class ModelFormattingTools(Toolkit):
             metrics_table = "| Metric | Value |\n| --- | --- |\n"
             for key, value in key_metrics.items():
                 if key.lower() == "irr":
-                    # Format IRR as percentage
-                    metrics_table += f"| {key.upper()} | {value:.2%} |\n"
+                    # Format IRR as percentage, handling None values
+                    if value is not None and isinstance(value, (int, float)):
+                        metrics_table += f"| {key.upper()} | {value:.2%} |\n"
+                    else:
+                        metrics_table += f"| {key.upper()} | N/A |\n"
                 elif isinstance(value, (int, float)):
                     # Format monetary values with $ and commas
                     metrics_table += f"| {key.upper()} | ${value:,.2f} |\n"
@@ -334,7 +337,7 @@ class ModelFormattingTools(Toolkit):
                     md_output += f"| NPV | " + " | ".join(npv_values) + " |\n"
                     
                 if "irr_results" in scenario_analysis:
-                    irr_values = [f"{v:.2%}" if v is not None else "N/A" for v in scenario_analysis["irr_results"]]
+                    irr_values = [f"{v:.2%}" if v is not None and isinstance(v, (int, float)) else "N/A" for v in scenario_analysis["irr_results"]]
                     md_output += f"| IRR | " + " | ".join(irr_values) + " |\n"
                     
                 if "payback_periods" in scenario_analysis:
