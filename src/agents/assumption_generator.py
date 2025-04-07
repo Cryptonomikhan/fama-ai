@@ -6,9 +6,11 @@ from src.agents.searcher import SearchingAgent
 from src.tools.website_scraper import WebsiteScraperTools
 import logging
 from textwrap import dedent
-from typing import Any, Optional, Iterator, List
+from typing import Any, Optional, List
 import os
 from dotenv import load_dotenv
+from src.tools.website_scraper import WebsiteScraperTools
+from src.knowledge.logging import wrap_knowledge_base
 
 # Load environment variables from .env file
 load_dotenv()
@@ -17,6 +19,13 @@ logger = logging.getLogger(__name__)
 
 
 class AssumptionGeneratorAgent:
+    """
+    Agent specialized in generating financial model assumptions based on provided data and knowledge sources.
+    
+    This agent analyzes information to create realistic, defensible assumptions for financial models.
+    It can leverage both provided data and a knowledge base to derive bull, base, and bear case
+    assumptions for various financial modeling scenarios.
+    """
     def __init__(
         self,
         provider: str = "formation",
@@ -27,8 +36,30 @@ class AssumptionGeneratorAgent:
         firecrawl_api_key: Optional[str] = None,
         data: Optional[str] = None,
         additional_tools: List = None,
+        knowledge_base: Optional[Any] = None,
+        search_knowledge: bool = True,
+        session_id: Optional[str] = None,
+        storage: Optional[Any] = None,
         **kwargs: Any
     ):
+        """
+        Initialize an AssumptionGeneratorAgent with the specified parameters.
+        
+        Args:
+            provider: Model provider (e.g., "openai", "formation", "anthropic")
+            model_id: ID of the model to use
+            temperature: Temperature for model generation (higher = more creative, lower = more deterministic)
+            max_tokens: Maximum tokens to generate in responses
+            firecrawl: Whether to use Firecrawl for web crawling
+            firecrawl_api_key: API key for Firecrawl (if None, tries to get from environment)
+            data: Research data to use for assumption generation
+            additional_tools: Additional tools to give the agent
+            knowledge_base: Knowledge base instance to use for semantic search
+            search_knowledge: Whether to search the knowledge base for relevant information
+            session_id: Session ID for knowledge tracking across agents
+            storage: Optional storage backend for maintaining agent state across sessions
+            **kwargs: Additional keyword arguments for the model
+        """
 
         logger.info("Initializing AssumptionGenerator Agent ")
         
@@ -77,6 +108,8 @@ class AssumptionGeneratorAgent:
                 - Verify that the planned action complies with all policies
                 - Iterate over tool results for correctness
 
+            {knowledge_base_instruction}
+
             ## Rules
                 - Use the provided data as your primary source of information
                 - If you need to verify information or get additional details from URLs in the data, use the WebsiteScraperTools:
@@ -93,8 +126,32 @@ class AssumptionGeneratorAgent:
                 - Always justify your assumptions with data and cite sources where applicable
         """)
         
-        # Format the instructions with the data
-        formatted_instructions = instructions_template.format(data_placeholder=self.data or "input data")
+        # Add knowledge base instructions if a knowledge base is provided
+        knowledge_base_instruction = ""
+        if knowledge_base and search_knowledge:
+            # Wrap knowledge base with logging if it hasn't been wrapped already
+            if session_id and not hasattr(knowledge_base, '_kb_logging_wrapped'):
+                knowledge_base = wrap_knowledge_base(
+                    knowledge_base,
+                    agent_name="AssumptionGeneratorAgent",
+                    session_id=session_id
+                )
+                knowledge_base._kb_logging_wrapped = True
+                logger.info("Knowledge base wrapped with logging for AssumptionGeneratorAgent")
+            
+            knowledge_base_instruction = dedent("""\
+                ## Using the Knowledge Base
+                - Check the knowledge base for industry-specific data, benchmarks, and historical performance metrics
+                - When developing assumptions, first look for similar assets or investments in the knowledge base
+                - The knowledge base may contain proprietary information that isn't available on the web
+                - Use knowledge base data to validate and refine your assumptions
+                - When citing information from the knowledge base, clearly identify it as a source
+                - Balance knowledge base insights with the provided research data to create well-rounded assumptions
+            """)
+            logger.info("Knowledge base provided, updating assumption generator instructions")
+        
+        # Format the instructions with the knowledge base instruction
+        formatted_instructions = instructions_template.format(knowledge_base_instruction=knowledge_base_instruction)
 
         self.agent = Agent(
             name="Assumption Generator Agent",
@@ -119,8 +176,11 @@ class AssumptionGeneratorAgent:
                 your assumptions.
             """),
             instructions=formatted_instructions,
+            knowledge_base=knowledge_base,
+            search_knowledge=search_knowledge,
             show_tool_calls=True,
-            markdown=True
+            markdown=True,
+            storage=storage
         )
 
 

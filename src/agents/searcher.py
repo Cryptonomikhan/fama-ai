@@ -9,6 +9,7 @@ from textwrap import dedent
 from typing import Any, Optional, List
 import os
 from dotenv import load_dotenv
+from src.knowledge.logging import wrap_knowledge_base
 
 # Load environment variables from .env file
 load_dotenv()
@@ -17,6 +18,16 @@ logger = logging.getLogger(__name__)
 
 
 class SearchingAgent:
+    """
+    Agent specialized in searching for information both online and in knowledge bases.
+    
+    This agent uses web search tools, web scraping, and knowledge base searching to gather 
+    comprehensive information on a topic. It can balance between using a provided knowledge 
+    base for domain-specific information and searching the web for up-to-date information.
+    
+    The agent's output is structured to be easily used by other agents in the financial 
+    modeling process.
+    """
     def __init__(
         self,
         provider: str = "formation",
@@ -26,11 +37,31 @@ class SearchingAgent:
         firecrawl: bool = False,
         firecrawl_api_key: Optional[str] = None,
         additional_tools: List = None,
+        knowledge_base: Optional[Any] = None,
+        search_knowledge: bool = True,
+        session_id: Optional[str] = None,
+        storage: Optional[Any] = None,
         **kwargs: Any
     ):
-
-        logger.info("Initializing WebSearch Agent ")
+        """
+        Initialize a SearchingAgent with the specified parameters.
         
+        Args:
+            provider: Model provider (e.g., "openai", "formation", "anthropic")
+            model_id: ID of the model to use
+            temperature: Temperature for model generation (higher = more creative, lower = more deterministic)
+            max_tokens: Maximum tokens to generate in responses
+            firecrawl: Whether to use Firecrawl for web crawling
+            firecrawl_api_key: API key for Firecrawl (if None, tries to get from environment)
+            additional_tools: Additional tools to give the agent
+            knowledge_base: Knowledge base instance to use for semantic search
+            search_knowledge: Whether to search the knowledge base for relevant information
+            session_id: Session ID for knowledge tracking across agents
+            storage: Optional storage backend for maintaining agent state across sessions
+            **kwargs: Additional keyword arguments for the model
+        """
+        
+        logger.info("Initializing SearchingAgent")
         model = create_model(
             provider=provider,
             model_id=model_id,
@@ -38,56 +69,122 @@ class SearchingAgent:
             max_tokens=max_tokens,
             **kwargs
         )
-
-        # Build tools list
-        tools = [DuckDuckGoTools(), ThinkingTools()]
+        
+        # Build tools list based on availability
+        tools = [ThinkingTools(), DuckDuckGoTools()]
         
         # Always add our custom WebsiteScraperTools
         tools.append(WebsiteScraperTools())
-        logger.info("Added WebsiteScraperTools for webpage crawling")
         
-        # Add Firecrawl if explicitly requested and API key is provided
-        if firecrawl and firecrawl_api_key:
-            tools.append(FirecrawlTools(scrape=True, crawl=True, api_key=firecrawl_api_key))
-            logger.info("Firecrawl tool enabled")
-        elif firecrawl:
-            firecrawl_api_key = os.environ.get("FIRECRAWL_API_KEY")
+        # Conditionally add FirecrawlTools if requested
+        if firecrawl:
+            firecrawl_api_key = firecrawl_api_key or os.environ.get("FIRECRAWL_API_KEY")
             if firecrawl_api_key:
-                tools.append(FirecrawlTools(scrape=True, crawl=True, api_key=firecrawl_api_key))
-                logger.info("Firecrawl tool enabled with API key from environment")
+                logger.info("Adding FirecrawlTools to SearchingAgent")
+                tools.append(FirecrawlTools(api_key=firecrawl_api_key))
             else:
-                logger.warning("Firecrawl requested but no API key provided - falling back to WebsiteScraperTools only")
-            
+                logger.warning("Firecrawl was requested but no API key was provided. Will not add FirecrawlTools.")
+        
         # Add any additional tools provided
         if additional_tools:
             for tool in additional_tools:
                 tools.append(tool)
-                logger.info(f"Added additional tool: {tool.name}")
-
-        # Update instructions to mention our website scraper
-        instructions = dedent("""\
-            ## Using the think tool
-            Before taking any action or responding to the user after receiving tool results, use the think tool as a scratchpad to:
-                - List the specific rules that apply to the current request
-                - Check if all required information is collected
-                - Verify that the planned action complies with all policies
-                - Iterate over tool results for correctness
-
-            ## Rules
-                - Use the DuckDuckGo search tool to find relevant information on the web
-                - When you find a site that may contain relevant information, use the WebsiteScraperTools to:
-                  - scrape_url: Extract content from a single URL
-                  - scrape_multiple_urls: Extract content from multiple URLs in parallel
-                  - summarize_webpage: Get a summary of a webpage including title, content, and links
-                - Convert the data found into a format that is easy to reason about
-                - Use the think tool to evaluate whether the collected data is relevant to the task
-                - Structure quantitative data in JSON, CSV, TSV, or markdown table format for easy use by other tools
-                - Format non-quantitative data in markdown for parsing and later use
-                - Use the think tool generously to develop thoughts and ideas
-                - Your job is to gather comprehensive information and present it in a clear, well-organized manner
-                - When done thinking, take additional actions if necessary to complete the task
-                - Always provide sources for the information you gather, including URLs
+                logger.info(f"Added additional tool to SearchingAgent: {tool.name}")
+        
+        # Instructions for the agent
+        instructions = dedent("""
+        # Instructions on Conducting Comprehensive Research
+        
+        ## General Research Approach
+        - Research the investment opportunity thoroughly using all available tools
+        - First search for general information about the type of investment
+        - Then research specific performance characteristics of the asset class
+        - Gather current market data including:
+          * Current prices or rates
+          * Historical performance
+          * Expert projections
+          * Comparable investments
+          * Market trends
+        - Focus on quantitative data that can be used in financial modeling
+        - Always cite your sources and include URLs when possible
+        
+        ## Financial Data to Prioritize
+        - Acquisition costs
+        - Expected revenue generation mechanisms
+        - Operating expense ratios
+        - Maintenance costs
+        - Historical appreciation/depreciation rates
+        - Vacancy or utilization rates (depending on asset class)
+        - Seasonality factors
+        - Regulatory or tax considerations
+        - Liquidity and market depth
+        - Recent comparable transactions
+        
+        ## Using the Knowledge Base
+        - When a knowledge base is available, search it for:
+          * Asset-specific performance data
+          * Proprietary market intelligence
+          * Historical transaction records
+          * Industry benchmarks
+        - Cross-reference knowledge base findings with current web data
+        - Always prefer more recent information 
+        - Combine multiple sources to build a comprehensive view
+        
+        ## Effective Web Searching
+        - Use precise search queries that include specific terms related to:
+          * The exact investment vehicle type
+          * Current year + "data" or "performance"
+          * Industry-specific metrics and benchmarks
+          * Geographic specificity when relevant
+        - Evaluate source credibility before including information
+        - Prefer primary sources and industry publications over general news
+        - Use the web scraper tool when you need detailed information from specific pages
+        - Gather numerical data, not just qualitative assessments
+        
+        ## Organizing Your Findings
+        - Structure your research in clear categories
+        - Present information in order of relevance and reliability
+        - Clearly separate facts from projections or estimates
+        - Format numerical data consistently
+        - Specify data sources for each major finding
+        - Highlight any significant data gaps or contradictions
+        
+        ## Handling Data Inconsistency
+        - When you encounter conflicting data:
+          * Note the discrepancy
+          * Compare source credibility
+          * Consider recency of information
+          * Look for additional sources to validate
+          * Present the range of findings
+        - Be transparent about uncertainty
+        
+        ## Numerical Data Presentation
+        - Always include units with numerical data (%, $, years, etc.)
+        - Present ranges when appropriate rather than single point estimates
+        - Note the timeframe for any performance data
+        - Convert all monetary values to consistent currency
+        - Use consistent decimal precision
+        
+        ## Scope and Limitations
+        - Focus on directly relevant information for financial modeling
+        - Avoid digressing into tangential topics
+        - Maintain objectivity; don't showcase only positive information
+        - Acknowledge limitations in available data
+        - Suggest where additional research might be valuable
+        
+        Remember: Your research will directly inform the assumptions used in the financial model, so accuracy, comprehensiveness, and proper citing of sources are critical.
         """)
+        
+        if knowledge_base and search_knowledge:
+            # Wrap knowledge base with logging if it hasn't been wrapped already
+            if session_id and not hasattr(knowledge_base, '_kb_logging_wrapped'):
+                knowledge_base = wrap_knowledge_base(
+                    knowledge_base, 
+                    agent_name="SearchingAgent",
+                    session_id=session_id
+                )
+                knowledge_base._kb_logging_wrapped = True
+                logger.info("Knowledge base wrapped with logging for SearchingAgent")
 
         self.agent = Agent(
             name="Web Search Agent",
@@ -113,8 +210,11 @@ class SearchingAgent:
                 links to webpages where you found the data.
             """),
             instructions=instructions,
+            knowledge_base=knowledge_base,
+            search_knowledge=search_knowledge,
             show_tool_calls=True,
-            markdown=True
+            markdown=True,
+            storage=storage
         )
 
 

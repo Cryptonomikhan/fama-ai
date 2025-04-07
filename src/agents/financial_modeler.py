@@ -1,15 +1,16 @@
-from agno.agent import Agent, RunResponse
+from agno.agent import Agent
 from agno.tools.thinking import ThinkingTools
+from src.tools.math_tools import MathTools
 from src.models.factory import create_model
 from src.tools.financial_calculations import FinancialCalculationTools
 from src.tools.model_formatting import ModelFormattingTools
-from src.tools.math_tools import MathTools
 from src.agents.searcher import SearchingAgent
 from src.agents.assumption_generator import AssumptionGeneratorAgent
 from src.agents.metrics_deriver import MetricsDerivingAgent
+from src.knowledge.logging import wrap_knowledge_base
 import logging
 from textwrap import dedent
-from typing import Any, Dict, List, Optional, Iterator
+from typing import Any, List, Optional
 import os
 from dotenv import load_dotenv
 
@@ -20,6 +21,13 @@ logger = logging.getLogger(__name__)
 
 
 class FinancialModelingAgent:
+    """
+    Agent specialized in creating comprehensive financial models based on research, assumptions, and metrics.
+    
+    This agent builds sophisticated financial models for various investment opportunities. It can leverage data from
+    previous agents in the pipeline, as well as knowledge base information, to create accurate, detailed financial
+    projections across multiple scenarios (bull, base, and bear cases).
+    """
     def __init__(
         self,
         provider: str = "formation",
@@ -29,8 +37,31 @@ class FinancialModelingAgent:
         searcher_data: Optional[str] = None,
         assumption_data: Optional[str] = None,
         metrics_data: Optional[str] = None,
+        additional_tools: Optional[List] = None,
+        knowledge_base: Optional[Any] = None,
+        search_knowledge: bool = True,
+        session_id: Optional[str] = None,
+        storage: Optional[Any] = None,
         **kwargs: Any
     ):
+        """
+        Initialize a FinancialModelingAgent with the specified parameters.
+        
+        Args:
+            provider: Model provider (e.g., "openai", "formation", "anthropic")
+            model_id: ID of the model to use
+            temperature: Temperature for model generation (higher = more creative, lower = more deterministic)
+            max_tokens: Maximum tokens to generate in responses
+            searcher_data: Data from the SearchingAgent with market research
+            assumption_data: Data from the AssumptionGeneratorAgent with key assumptions
+            metrics_data: Data from the MetricsDerivingAgent defining metrics to calculate
+            additional_tools: Additional tools to give the agent
+            knowledge_base: Knowledge base instance to use for semantic search
+            search_knowledge: Whether to search the knowledge base for relevant information
+            session_id: Session ID for knowledge tracking across agents
+            storage: Optional storage backend for maintaining agent state across sessions
+            **kwargs: Additional keyword arguments for the model
+        """
         logger.info("Initializing Financial Modeling Agent")
         
         # Store input data
@@ -55,8 +86,14 @@ class FinancialModelingAgent:
             MathTools()
         ]
         
+        # Add any additional tools provided
+        if additional_tools:
+            for tool in additional_tools:
+                tools.append(tool)
+                logger.info(f"Added additional tool to FinancialModelingAgent: {tool.name}")
+        
         # Instructions for the agent
-        instructions_template = dedent("""
+        base_instructions = dedent("""
             ## CRITICAL: Revenue Calculation Requirements
                 - For ALL investment types:
                   * ALWAYS calculate realistic annual revenue by considering practical utilization/occupancy rates
@@ -166,6 +203,8 @@ class FinancialModelingAgent:
                    - Net Operating Income: $40,440
                    - Cap Rate: 5.06%
                    - Cash-on-Cash Return: 5.22%
+
+            {knowledge_base_instruction}
 
             ## IMPORTANT: Context-Specific Financial Analysis
                 - ANALYZE the specific context of each investment opportunity to identify the key metrics investors care about
@@ -278,6 +317,35 @@ class FinancialModelingAgent:
                 - If any metric seems unrealistic (too high or too low), re-examine ALL assumptions and calculations
         """)
         
+        # Add knowledge base instructions if a knowledge base is provided
+        knowledge_base_instruction = ""
+        if knowledge_base and search_knowledge:
+            # Wrap knowledge base with logging if it hasn't been wrapped already
+            if session_id and not hasattr(knowledge_base, '_kb_logging_wrapped'):
+                knowledge_base = wrap_knowledge_base(
+                    knowledge_base,
+                    agent_name="FinancialModelingAgent",
+                    session_id=session_id
+                )
+                knowledge_base._kb_logging_wrapped = True
+                logger.info("Knowledge base wrapped with logging for FinancialModelingAgent")
+            
+            knowledge_base_instruction = dedent("""
+            ## Using the Knowledge Base
+                - REFERENCE the knowledge base for industry-specific financial modeling approaches and standards
+                - SEARCH the knowledge base for comparable investment modeling examples to ensure your calculations align with industry norms
+                - VERIFY your financial ratios against knowledge base benchmarks for similar investments
+                - ADJUST your financial projections based on historical data available in the knowledge base
+                - CHECK the knowledge base for specialized calculation methods specific to this investment type
+                - INCORPORATE financial modeling best practices from the knowledge base into your approach
+                - CITE knowledge base sources when utilizing specialized calculations or industry-specific methodologies
+                - PRIORITIZE knowledge base information over general assumptions when there are conflicts
+            """)
+            logger.info("Knowledge base provided, updating financial modeling instructions")
+        
+        # Format the instructions with the knowledge base instruction
+        instructions_template = base_instructions.format(knowledge_base_instruction=knowledge_base_instruction)
+        
         # Initialize the agent
         self.agent = Agent(
             name="Financial Modeling Agent",
@@ -306,8 +374,11 @@ class FinancialModelingAgent:
                 decision-making.
             """),
             instructions=instructions_template,
+            knowledge_base=knowledge_base,
+            search_knowledge=search_knowledge,
             show_tool_calls=True,
-            markdown=True
+            markdown=True,
+            storage=storage  # Pass storage object if available
         )
 
 

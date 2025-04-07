@@ -1,0 +1,340 @@
+openapi: 3.0.0
+info:
+  title: Financial Modeling API
+  description: API for financial modeling using a coordinated team of specialized agents with knowledge base integration
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+paths:
+  /:
+    get:
+      summary: API health check
+      description: Returns basic information about the API including its status and supported features
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  message:
+                    type: string
+                    example: Financial Modeling API is running
+                  supported_providers:
+                    type: array
+                    items:
+                      type: string
+                    example: ["openai", "anthropic", "formation"]
+                  api_version:
+                    type: string
+                    example: 1.0.0
+                  features:
+                    type: object
+                    properties:
+                      knowledge_base:
+                        type: string
+                        example: Supported - allows integration with external knowledge sources via URLs or text
+                      vector_databases:
+                        type: array
+                        items:
+                          type: string
+                        example: ["lancedb", "tantivy"]
+                      embedding_providers:
+                        type: array
+                        items:
+                          type: string
+                        example: ["openai", "anthropic", "cohere", "local"]
+  /health:
+    get:
+      summary: Check system health
+      description: Check system health, including model provider availability
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  api:
+                    type: string
+                    example: operational
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2023-04-05T20:47:00.123456'
+                  providers:
+                    type: object
+                    properties:
+                      openai:
+                        type: string
+                        example: requires_api_key
+                      anthropic:
+                        type: string
+                        example: requires_api_key
+                      formation:
+                        type: string
+                        example: requires_api_key
+                  message:
+                    type: string
+                    example: Use the /task/check-api-key endpoint to verify specific provider API keys
+  /task/submit:
+    post:
+      summary: Submit financial modeling task
+      description: >
+        Execute a financial modeling task with a coordinated team of specialized agents.
+        This endpoint processes a natural language task description and generates a comprehensive
+        financial analysis using a team of specialized agents.
+      tags:
+        - Tasks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskRequest'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Streaming response of the financial analysis
+            application/json:
+              schema:
+                type: string
+                description: Complete financial analysis
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Validation error details
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: An error occurred while processing the task
+  /task/check-api-key:
+    post:
+      summary: Check API key validity
+      description: Check if the provided API key is valid for the specified provider
+      tags:
+        - Health
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/APIKeyCheckRequest'
+      responses:
+        '200':
+          description: API key is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: valid
+                  provider:
+                    type: string
+                    example: openai
+        '400':
+          description: API key is invalid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: invalid
+                  provider:
+                    type: string
+                    example: openai
+                  error:
+                    type: string
+                    example: Invalid authentication token
+        '500':
+          description: Error testing API key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: error
+                  message:
+                    type: string
+                    example: Could not test API key
+  /task/logs/{request_id}:
+    get:
+      summary: Get request logs
+      description: Retrieve logs for a specific request
+      tags:
+        - Logs
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the request to retrieve logs for
+      responses:
+        '200':
+          description: Logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  request_id:
+                    type: string
+                    example: openai_20230405_204700
+                  logs:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      - 2023-04-05 20:47:00 - Starting new task request ID: openai_20230405_204700
+                      - 2023-04-05 20:47:01 - Creating agents with provider: openai, model: gpt-4o
+        '404':
+          description: Logs not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: No logs found for request ID
+        '500':
+          description: Error retrieving logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Error retrieving logs
+components:
+  schemas:
+    TaskRequest:
+      type: object
+      required:
+        - message
+        - provider_api_key
+      properties:
+        message:
+          type: string
+          description: The natural language description of the financial modeling task
+          example: Create a financial model for a rental property investment
+        stream:
+          type: boolean
+          description: Whether to stream the response or return it all at once
+          default: true
+        provider:
+          type: string
+          description: The model provider to use
+          enum: [openai, anthropic, formation]
+          default: openai
+        model:
+          type: string
+          description: The specific model to use
+          default: gpt-4o
+        provider_api_key:
+          type: string
+          description: API key for the specified provider
+        verbose_logging:
+          type: boolean
+          description: Enable detailed logging of the entire process
+          default: false
+        # Knowledge base parameters
+        knowledge_urls:
+          type: array
+          items:
+            type: string
+          description: List of URLs to documents that will be used as knowledge sources
+          example: ["https://example.com/rental-rates-2023.pdf"]
+        knowledge_text:
+          type: string
+          description: Raw text content to use as a knowledge source
+          example: "2023 rental yield averages: Manhattan 3.2%, Brooklyn 4.1%, Queens 4.5%"
+        vector_db_type:
+          type: string
+          description: Type of vector database to use
+          enum: [lancedb, tantivy]
+          default: lancedb
+        embedder_provider:
+          type: string
+          description: Provider for embedding models
+          enum: [openai, anthropic, cohere, local]
+          default: openai
+        # Storage parameters
+        storage_type:
+          type: string
+          description: Type of storage to use for persisting state
+          enum: [sqlite, postgres, mongodb, dynamodb, json, yaml]
+          nullable: true
+        storage_connection:
+          type: string
+          description: |
+            Connection string or configuration for storage. Format depends on storage_type:
+            - sqlite: 'sqlite:///data.db' or path to db file
+            - postgres: 'postgresql://user:pass@host:port/db'
+            - mongodb: 'mongodb://user:pass@host:port/db'
+            - dynamodb: JSON string with AWS credentials and region
+            - json/yaml: Directory path for storing files
+          nullable: true
+        session_id:
+          type: string
+          description: Session ID for resuming conversations across multiple API calls
+          nullable: true
+        user_id:
+          type: string
+          description: User ID for personalization and tracking user-specific data
+          nullable: true
+        embedder_model:
+          type: string
+          description: Specific embedding model to use (varies by provider)
+          default: text-embedding-3-small
+          example: text-embedding-3-small
+    APIKeyCheckRequest:
+      type: object
+      required:
+        - provider
+        - api_key
+      properties:
+        provider:
+          type: string
+          description: Provider to check the API key for
+          enum: [openai, anthropic, formation]
+        api_key:
+          type: string
+          description: The API key to validate
