@@ -11,7 +11,7 @@ import json
 from typing import Optional, Dict, Any
 
 from agno.storage.agent.json import JsonAgentStorage
-from src.storage.factory import StorageError
+from src.storage.errors import StorageError
 
 logger = logging.getLogger(__name__)
 

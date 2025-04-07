@@ -596,7 +596,7 @@ KNOWLEDGE_SOURCES = {
     "json": JSONKnowledgeBase,
     "arxiv": ArxivKnowledgeBase,
     "document": DocumentKnowledgeBase,
-    "s3_pdf": S3PDFKnowledgeBase, 
+    "s3_pdf": S3PDFKnowledgeBase,
     "s3_text": S3TextKnowledgeBase,
     "wikipedia": WikipediaKnowledgeBase,
     "combined": CombinedKnowledgeBase
@@ -604,12 +604,12 @@ KNOWLEDGE_SOURCES = {
 
 # Type alias for knowledge base classes
 KnowledgeBase = Union[
-    PDFUrlKnowledgeBase, 
-    TextKnowledgeBase, 
-    WebsiteKnowledgeBase, 
-    CSVKnowledgeBase, 
-    PDFKnowledgeBase, 
-    JSONKnowledgeBase, 
+    PDFUrlKnowledgeBase,
+    TextKnowledgeBase,
+    WebsiteKnowledgeBase,
+    CSVKnowledgeBase,
+    PDFKnowledgeBase,
+    JSONKnowledgeBase,
     CombinedKnowledgeBase,
     ArxivKnowledgeBase,
     DocumentKnowledgeBase,
@@ -657,7 +657,6 @@ def load_url_content(
         logger.info(f"Loading content from {len(urls)} URLs", 
                    extra={'kb_operation': 'url_knowledge_loading', 'kb_id': f"url_loading_{int(time.time()*1000)}"})
         
-        from agno.knowledge.loaders.url import URLKnowledgeSourceLoader
         loader = URLKnowledgeSourceLoader(concurrent=concurrent, timeout=timeout)
         results = loader.load_all(urls)
         

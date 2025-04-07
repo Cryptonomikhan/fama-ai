@@ -28,18 +28,10 @@ from src.storage.mongodb import create_mongodb_storage
 from src.storage.sqlite import create_sqlite_storage
 from src.storage.json import create_json_storage
 from src.storage.yaml import create_yaml_storage
+from src.storage.errors import StorageError
 
 # Set up logging
 logger = logging.getLogger(__name__)
-
-class StorageError(Exception):
-    """Base exception for storage-related errors"""
-    
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
-        self.message = message
-        self.details = details or {}
-        super().__init__(message)
-
 
 class StorageConnectionError(StorageError):
     """Exception raised for storage connection errors"""

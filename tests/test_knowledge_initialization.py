@@ -25,7 +25,6 @@ sys.modules['agno.models.base'] = MagicMock()
 sys.modules['agno.models.base'].Model = MagicMock()
 
 # Mock external libraries that cause issues
-sys.modules['textract'] = MagicMock()
 sys.modules['pinecone'] = MagicMock()
 sys.modules['lancedb'] = MagicMock()
 sys.modules['pgvector'] = MagicMock()
@@ -33,7 +32,6 @@ sys.modules['pgvector.sqlalchemy'] = MagicMock()
 sys.modules['wikipedia'] = MagicMock()
 sys.modules['arxiv'] = MagicMock()
 sys.modules['six'] = MagicMock()
-sys.modules['six.moves'] = MagicMock()
 sys.modules['dateutil'] = MagicMock()
 
 # We also need to mock the src.models module to prevent it from importing agno

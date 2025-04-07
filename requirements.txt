@@ -2,6 +2,8 @@
 agno>=1.2.7
 httpx>=0.24.0
 python-dotenv>=1.0.0
+six>=1.16.0
+mcp>=0.1.0
 
 # Model providers
 openai>=1.0.0
@@ -9,21 +11,24 @@ anthropic>=0.7.0
 
 # Tools and extensions
 duckduckgo-search>=3.0.0
+firecrawl-py
 pypdf>=3.15.0
 arxiv>=1.4.7
 agno-aws>=0.0.1
-textract==1.6.0
 wikipedia>=1.4.0
 lancedb>=0.3.0
 sqlalchemy>=2.0.0
 psycopg>=3.1.12
 pgvector>=0.2.0
 pinecone>=2.2.2
-six>=1.10.0
+pymongo>=4.6.0
 
 # Financial modeling
 numpy>=1.24.0
+numpy_financial
 pandas>=2.0.0
+matplotlib
+seaborn
 reportlab>=3.6.0
 
 # API and server

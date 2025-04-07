@@ -7,10 +7,11 @@ using the Agno framework's storage capabilities.
 """
 import logging
 import os
+import yaml
 from typing import Optional, Dict, Any
 
-from agno.storage.yaml import YamlStorage
-from src.storage.factory import StorageError
+from agno.storage.agent.yaml import YamlAgentStorage
+from src.storage.errors import StorageError
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ def create_yaml_storage(
     dir_path: str,
     create_dir_if_not_exists: bool = True,
     **kwargs
-) -> YamlStorage:
+) -> YamlAgentStorage:
     """
     Create a YAML file-based storage for agent state.
     
@@ -59,7 +60,7 @@ def create_yaml_storage(
         logger.info(f"Initializing YAML storage in directory: {dir_path}")
         
         # Create YAML storage backend
-        return YamlStorage(dir_path=dir_path, **kwargs)
+        return YamlAgentStorage(dir_path=dir_path, **kwargs)
     except StorageError:
         # Re-raise StorageError instances as is
         raise
