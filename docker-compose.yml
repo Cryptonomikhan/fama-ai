@@ -9,26 +9,20 @@ services:
     restart: always
     ports:
       - "8000:8000"
-    volumes:
-      - ./logs:/app/logs
-      - ./uploads:/app/uploads
-      - ./data:/app/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
-    networks:
-      - fama-network
     deploy:
       resources:
         limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
           cpus: '1.0'
           memory: 2G
-        reservations:
-          cpus: '0.5'
-          memory: 1G
 
   # Optional local development database
   # The API doesn't require this since storage configuration
@@ -41,10 +35,11 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-fama_user}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-fama}
+      - POSTGRES_HOST_AUTH_METHOD=${POSTGRES_HOST_AUTH_METHOD:-md5}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     networks:
       - fama-network
     healthcheck:
@@ -71,3 +66,4 @@ volumes:
 networks:
   fama-network:
     driver: bridge
+    name: fama-network
