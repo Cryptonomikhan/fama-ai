@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: cryptonimkhan/fama-api:0.1.0
     container_name: fama-api
     restart: always
     ports:
